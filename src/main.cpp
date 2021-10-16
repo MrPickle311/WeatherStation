@@ -11,6 +11,10 @@
 
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
+#include "../inc/i2c.hpp"
+#include  "string.h"
+#include "stdio.h"
+#include "sensor.hpp"
 
 #define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0
 
@@ -111,16 +115,6 @@ void usart2Setup (void)
 	usart2_config();
 }
 
-void sendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART2->DR = byte;//push byte
-}
-
 uint8_t UART2_GetChar (void)
 {
 	static uint8_t temp;
@@ -134,18 +128,30 @@ uint8_t UART2_GetChar (void)
 	return temp;
 }
 
+void getAndShowTemperature()
+{
+
+}
+
 int main(void)
 {
 	clk_en();
 	gpioa_en();
 	turn_on_led();
 	usart2Setup();
+	setupI2C();
 
+	uint8_t new_odr = 0x30;
+
+	writeRegValue(CTRL_REG1, new_odr);
+
+
+	uasrtSendByte(100);
 	uint8_t byte;
 	while(1)
 	{
 		byte = UART2_GetChar();
-		sendByte(byte);
+		uasrtSendByte(byte);
 	}
 
 }
