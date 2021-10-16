@@ -67,10 +67,86 @@ void turn_on_led()
 	GPIOA->BSRR |= GPIO_BSRR_BS5;
 }
 
+void usart2_gpio_tx_en()
+{
+	//pa2 alternate function , push pull , up to 50 MHz ( usart 2 works with 32 mhz )
+	GPIOA->CRL   |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1;
+}
+
+void usart2_gpio_rx_en()
+{
+	GPIOA->CRL &= ~( GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 );   // Intput Mode For PA3
+
+	GPIOA->CRL |= GPIO_CRL_CNF3_1 ;  // Input Pull Up/ Down For PA3
+
+	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
+}
+
+void usart2_gpioa_en()
+{
+	usart2_gpio_tx_en();
+	usart2_gpio_rx_en();
+}
+
+void usart2_clk_en()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+}
+
+void usart2_config()
+{
+	CLEAR_REG(USART2->CR1);
+
+	USART2->CR1 |= USART_CR1_UE;//enable usart2
+
+	USART2->BRR = (6 << 0) | (17 << 4);//mantisa = 17 , fraction = 6
+
+	USART2->CR1 |=  USART_CR1_RE  | USART_CR1_TE ;  // enable rx and tx
+}
+
+void usart2Setup (void)
+{
+	usart2_gpioa_en();
+	usart2_clk_en();
+	usart2_config();
+}
+
+void sendByte (uint8_t byte)
+{
+   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
+
+   USART2->DR = byte;//push byte
+}
+
+uint8_t UART2_GetChar (void)
+{
+	static uint8_t temp;
+
+	while (! ( USART2->SR & USART_SR_RXNE ) )  // Wait for RXNE to SET
+	{
+		asm volatile ("nop");
+	}
+
+	temp = USART2->DR;  // read the data.
+	return temp;
+}
+
 int main(void)
 {
 	clk_en();
 	gpioa_en();
 	turn_on_led();
+	usart2Setup();
+
+	uint8_t byte;
+	while(1)
+	{
+		byte = UART2_GetChar();
+		sendByte(byte);
+	}
+
 }
 
