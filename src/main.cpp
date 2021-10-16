@@ -86,6 +86,16 @@ void usart2_gpio_rx_en()
 	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
 }
 
+void uasrtSendByte (uint8_t byte)
+{
+   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
+
+   USART2->DR = byte;//push byte
+}
+
 void usart2_gpioa_en()
 {
 	usart2_gpio_tx_en();
@@ -130,7 +140,9 @@ uint8_t UART2_GetChar (void)
 
 void getAndShowTemperature()
 {
-
+	uint8_t byte;
+	readRegValue(&byte, TEMP_OUT_L);
+	uasrtSendByte(byte);
 }
 
 int main(void)
@@ -146,12 +158,18 @@ int main(void)
 	writeRegValue(CTRL_REG1, new_odr);
 
 
-	uasrtSendByte(100);
+//	uasrtSendByte(102);
 	uint8_t byte;
+
+	for(uint8_t i = 0 ; i < 30 ; ++i)
+	{
+		getAndShowTemperature();
+	}
+
 	while(1)
 	{
-		byte = UART2_GetChar();
-		uasrtSendByte(byte);
+//		byte = UART2_GetChar();
+//		uasrtSendByte(byte);
 	}
 
 }

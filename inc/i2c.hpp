@@ -3,16 +3,6 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 
-void uasrtSendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART2->DR = byte;//push byte
-}
-
 void enableGPIOB()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
@@ -25,6 +15,11 @@ void enableI2CClock()
 
 void setupI2Clocks()
 {
+	RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
+
+	I2C1->CR1 = 0x0;
+	I2C1->CR2 = 0x0;
+
 	enableGPIOB();
 	enableI2CClock();
 }
@@ -44,13 +39,13 @@ void setupI2CPins()
 	//select alternate functions for pb9 and pb8 , up to 50 mhz , open-drain
 
 	//sda
-	GPIOB->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_CNF9_0 | GPIO_CRH_MODE9_1 | GPIO_CRH_MODE9_0;
+	GPIOB->CRL |= GPIO_CRL_CNF7 | GPIO_CRL_MODE7;
 
 	//scl
-	GPIOB->CRH |= GPIO_CRH_CNF8_1 | GPIO_CRH_CNF8_0 | GPIO_CRH_MODE8_1 | GPIO_CRH_MODE8_0;
+	GPIOB->CRL |= GPIO_CRL_CNF6 | GPIO_CRL_MODE6;
 
 	pullUpI2CPins();
-	remapI2CPins();
+//	remapI2CPins(); not working
 }
 
 void resetI2CBus()
@@ -73,14 +68,30 @@ void enableI2C()
 
 void I2C_Start()
 {
-	I2C1->CR1 |= I2C_CR1_ACK;//enable ack generation
+	I2C1->CR1 |= I2C_CR1_ACK;//here bcs when PE cleared , bit number 10 is cleared also
 	I2C1->CR1 |= I2C_CR1_START;//generate start
+
+	while (!(I2C1->SR1 & I2C_SR1_SB ))  // wait for generate START signal
+	{
+		asm volatile ("nop");
+	}
 }
 
 void I2C_Stop()
 {
 	I2C1->CR1 |= I2C_CR1_STOP;
 }
+
+void I2C_ClearACK()
+{
+	I2C1->CR1 &= ~I2C_CR1_ACK;
+}
+
+void I2C_SetACK()
+{
+	I2C1->CR1 |= I2C_CR1_ACK;
+}
+
 
 void I2C_SendByte (uint8_t data)
 {
@@ -98,6 +109,16 @@ void I2C_SendByte (uint8_t data)
 	}
 }
 
+uint8_t I2C_ReadByte()
+{
+	while (!(I2C1->SR1 & (1<<6)))  // wait for "Data register not empty"
+	{
+		asm volatile ("nop");
+	}
+
+	return I2C1->DR;
+}
+
 void I2C_SendAddress(uint8_t address)
 {
 	I2C1->DR = address;  //  send the address
@@ -110,113 +131,66 @@ void I2C_SendAddress(uint8_t address)
 	volatile uint8_t temp = I2C1->SR1 | I2C1->SR2;  // read SR1 and SR2 to clear the ADDR bit
 }
 
-void I2C_Read (uint8_t Address, uint8_t *buffer, uint8_t size)
+void I2C_Read (uint8_t address, uint8_t *buffer, uint8_t size)
 {
-/**** STEPS FOLLOWED  ************
-1. If only 1 BYTE needs to be Read
-	a) Write the slave Address, and wait for the ADDR bit (bit 1 in SR1) to be set
-	b) the Acknowledge disable is made during EV6 (before ADDR flag is cleared) and the STOP condition generation is made after EV6
-	c) Wait for the RXNE (Receive Buffer not Empty) bit to set
-	d) Read the data from the DR
-2. If Multiple BYTES needs to be read
-  a) Write the slave Address, and wait for the ADDR bit (bit 1 in SR1) to be set
-	b) Clear the ADDR bit by reading the SR1 and SR2 Registers
-	c) Wait for the RXNE (Receive buffer not empty) bit to set
-	d) Read the data from the DR
-	e) Generate the Acknowlegment by settint the ACK (bit 10 in SR1)
-	f) To generate the nonacknowledge pulse after the last received data byte, the ACK bit must be cleared just after reading the
-		 second last data byte (after second last RxNE event)
-	g) In order to generate the Stop/Restart condition, software must set the STOP/START bit
-	   after reading the second last data byte (after the second last RxNE event)
-*/
+	int remaining_bytes_count = size;
 
-	int remaining = size;
-
-/**** STEP 1 ****/
 	if (size == 1)
 	{
-		/**** STEP 1-a ****/
-		I2C1->DR = Address;  //  send the address
-		while (!(I2C1->SR1 & (1<<1)));  // wait for ADDR bit to set
+		I2C_SendAddress(address);
 
-		/**** STEP 1-b ****/
-		I2C1->CR1 &= ~(1<<10);  // clear the ACK bit
-		uint8_t temp = I2C1->SR1 | I2C1->SR2;  // read SR1 and SR2 to clear the ADDR bit.... EV6 condition
-		I2C1->CR1 |= (1<<9);  // Stop I2C
+		I2C_ClearACK();  // clear the ACK bit
+		I2C_Stop();  // Stop I2C
 
-		/**** STEP 1-c ****/
-		while (!(I2C1->SR1 & (1<<6)));  // wait for RxNE to set
-
-		/**** STEP 1-d ****/
-		buffer[size-remaining] = I2C1->DR;  // Read the data from the DATA REGISTER
-
+		buffer[size-remaining_bytes_count] = I2C_ReadByte();
 	}
-
-/**** STEP 2 ****/
 	else
 	{
 		/**** STEP 2-a ****/
-		I2C1->DR = Address;  //  send the address
-		while (!(I2C1->SR1 & (1<<1)));  // wait for ADDR bit to set
+		I2C_SendAddress(address);
 
-		/**** STEP 2-b ****/
-		volatile uint8_t temp = I2C1->SR1 | I2C1->SR2;  // read SR1 and SR2 to clear the ADDR bit
-
-		while (remaining>2)
+		while ( remaining_bytes_count > 2 )
 		{
 			/**** STEP 2-c ****/
-			while (!(I2C1->SR1 & (1<<6)));  // wait for RxNE to set
-
-			/**** STEP 2-d ****/
-			buffer[size-remaining] = I2C1->DR;  // copy the data into the buffer
+			buffer[size-remaining_bytes_count] = I2C_ReadByte();
 
 			/**** STEP 2-e ****/
-			I2C1->CR1 |= 1<<10;  // Set the ACK bit to Acknowledge the data received
+			I2C_SetACK();  // Set the ACK bit to Acknowledge the data received
 
-			remaining--;
+			--remaining_bytes_count;
 		}
 
-		// Read the SECOND LAST BYTE
-		while (!(I2C1->SR1 & (1<<6)));  // wait for RxNE to set
-		buffer[size-remaining] = I2C1->DR;
+		// Read the penultimate byte
+		buffer[size-remaining_bytes_count] = I2C_ReadByte();
 
-		/**** STEP 2-f ****/
-		I2C1->CR1 &= ~(1<<10);  // clear the ACK bit
+		I2C_ClearACK();  // clear the ACK bit
 
-		/**** STEP 2-g ****/
-		I2C1->CR1 |= (1<<9);  // Stop I2C
+		I2C_Stop();  // Stop I2C
 
-		remaining--;
+		--remaining_bytes_count;
 
 		// Read the Last BYTE
-		while (!(I2C1->SR1 & (1<<6)));  // wait for RxNE to set
-		buffer[size-remaining] = I2C1->DR;  // copy the data into the buffer
+		buffer[size-remaining_bytes_count] = I2C_ReadByte();
 	}
-
 }
 
-void MPU_Write (uint8_t address, uint8_t reg, uint8_t data)
+void I2C_WriteToMem (uint8_t address, uint8_t reg, uint8_t data)
 {
 	I2C_Start ();
-
 	I2C_SendAddress(address);
-	uasrtSendByte(90);
-//ok
-
 	I2C_SendByte(reg);
-
 	I2C_SendByte(data);
 	I2C_Stop ();
 }
 
-void MPU_Read (uint8_t address, uint8_t reg, uint8_t *buffer, uint8_t size)
+void I2C_ReadFromMem (uint8_t address, uint8_t reg, uint8_t* target, uint8_t size)
 {
-	I2C_Start ();
+	I2C_Start();
 	I2C_SendAddress(address);
 	I2C_SendByte(reg);
-	I2C_Start ();  // repeated start
-	I2C_Read (address+0x01, buffer, size);
-	I2C_Stop ();
+	I2C_Start();  // repeated start
+	I2C_Read( address | 0x1 , target, size);
+	I2C_Stop();
 }
 
 void setupI2C()

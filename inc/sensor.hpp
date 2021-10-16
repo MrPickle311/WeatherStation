@@ -15,12 +15,12 @@ volatile const uint8_t PRESS_OUT_H = 0x2A;
 
 void readRegValue(uint8_t* result , uint8_t reg)
 {
-	MPU_Read( dev_adr , reg, result , 1);
+	I2C_ReadFromMem( dev_adr , reg, result , 1);
 }
 
 void writeRegValue(uint8_t reg , uint8_t value)
 {
-	MPU_Write(dev_adr, reg , value);
+	I2C_WriteToMem(dev_adr, reg , value);
 }
 
 //HAL_StatusTypeDef readTemperatureRaw(int16_t* result)
