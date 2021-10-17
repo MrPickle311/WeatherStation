@@ -86,16 +86,6 @@ void usart2_gpio_rx_en()
 	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
 }
 
-void uasrtSendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART2->DR = byte;//push byte
-}
-
 void usart2_gpioa_en()
 {
 	usart2_gpio_tx_en();
@@ -138,11 +128,52 @@ uint8_t UART2_GetChar (void)
 	return temp;
 }
 
+void usartSendByte (uint8_t byte)
+{
+   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
+
+   USART2->DR = byte;//push byte
+}
+
+void printText(volatile char* txt)//txt musi byc zakonczony '\0'
+{
+	while(*txt)
+	{
+		usartSendByte(*txt);
+		++txt;
+	}
+	usartSendByte('\r');
+	usartSendByte('\n');
+}
+
 void getAndShowTemperature()
 {
-	uint8_t byte;
-	readRegValue(&byte, TEMP_OUT_L);
-	uasrtSendByte(byte);
+	char txt[40];
+
+	float result = 0;
+
+	int16_t raw_res = 0;
+	uint16_t hum_raw = 0;
+	uint32_t pressure_raw = 0;
+
+	HTS221_Get_Temperature(&raw_res);
+	HTS221_Get_Humidity(&hum_raw);
+	readPressureRaw(&pressure_raw);
+
+	result = (float)raw_res / 10.0 - 6.2 ; // tempereature
+	sprintf(txt , "Temperature %f C \n\r" , result);
+	printText(txt);
+
+	result = (float)hum_raw / 10.0;// humidity
+	sprintf(txt , "Humidity %f % \n\r" , result);
+	printText(txt);
+
+	result = readPressureMillibars(pressure_raw);// pressure
+	sprintf(txt , "Pressure %f hPa \n\r" , result);
+	printText(txt);
 }
 
 int main(void)
@@ -153,23 +184,15 @@ int main(void)
 	usart2Setup();
 	setupI2C();
 
-	uint8_t new_odr = 0x30;
+//	resetLPS22();
+	setupLPS22();
+	setupHTS22();
 
-	writeRegValue(CTRL_REG1, new_odr);
-
-
-//	uasrtSendByte(102);
-	uint8_t byte;
-
-	for(uint8_t i = 0 ; i < 30 ; ++i)
-	{
-		getAndShowTemperature();
-	}
+	getAndShowTemperature();
 
 	while(1)
 	{
-//		byte = UART2_GetChar();
-//		uasrtSendByte(byte);
+
 	}
 
 }

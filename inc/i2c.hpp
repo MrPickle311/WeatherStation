@@ -176,11 +176,11 @@ void I2C_Read (uint8_t address, uint8_t *buffer, uint8_t size)
 
 void I2C_WriteToMem (uint8_t address, uint8_t reg, uint8_t data)
 {
-	I2C_Start ();
+	I2C_Start();
 	I2C_SendAddress(address);
 	I2C_SendByte(reg);
 	I2C_SendByte(data);
-	I2C_Stop ();
+	I2C_Stop();
 }
 
 void I2C_ReadFromMem (uint8_t address, uint8_t reg, uint8_t* target, uint8_t size)
