@@ -146,15 +146,12 @@ void I2C_Read (uint8_t address, uint8_t *buffer, uint8_t size)
 	}
 	else
 	{
-		/**** STEP 2-a ****/
 		I2C_SendAddress(address);
 
 		while ( remaining_bytes_count > 2 )
 		{
-			/**** STEP 2-c ****/
 			buffer[size-remaining_bytes_count] = I2C_ReadByte();
 
-			/**** STEP 2-e ****/
 			I2C_SetACK();  // Set the ACK bit to Acknowledge the data received
 
 			--remaining_bytes_count;

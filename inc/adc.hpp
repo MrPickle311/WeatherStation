@@ -3,18 +3,6 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 
-/************** STEPS TO FOLLOW *****************
-
-1. Enable ADC and GPIO clock
-2. Set the prescalar in the Common Control Register (CCR)
-3. Set the Scan Mode and Resolution in the Control Register 1 (CR1)
-4. Set the Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
-5. Set the Sampling Time for the channels in ADC_SMPRx
-6. Set the Regular channel sequence length in ADC_SQR1
-7. Set the Respective GPIO PINs in the Analog Mode
-
-************************************************/
-
 void enable_adc_clocks()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
@@ -74,7 +62,5 @@ void adc_start()
 	ADC1->CR2 |= ADC_CR2_EXTTRIG;  // Conversion on external event enabled
 
 	ADC1->CR2 |= ADC_CR2_SWSTART; // start regular conversion
-
-
 }
 
