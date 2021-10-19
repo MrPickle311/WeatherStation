@@ -1,20 +1,10 @@
-/**
-  ******************************************************************************
-  * @file    main.c
-  * @author  Damian Wojcik
-  * @version V1.0
-  * @date    13.03.2021
-  * @brief   Default main function.
-  ******************************************************************************
-*/
-
-
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 #include "../inc/i2c.hpp"
 #include  "string.h"
 #include "stdio.h"
 #include "sensor.hpp"
+#include "dma.hpp"
 
 #define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0
 
@@ -102,6 +92,11 @@ void usart2_config()
 	CLEAR_REG(USART2->CR1);
 
 	USART2->CR1 |= USART_CR1_UE;//enable usart2
+	USART2->CR3 |= USART_CR3_DMAT; // enable dma mode
+	USART2->CR3 |= USART_CR3_DMAR;
+
+//	USART2->CR1 |= USART_CR1_RXNEIE | USART_CR1_TXEIE;
+	NVIC_EnableIRQ(USART2_IRQn);
 
 	USART2->BRR = (6 << 0) | (17 << 4);//mantisa = 17 , fraction = 6
 
@@ -128,15 +123,7 @@ uint8_t UART2_GetChar (void)
 	return temp;
 }
 
-void usartSendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
 
-   USART2->DR = byte;//push byte
-}
 
 void printText(volatile char* txt)//txt musi byc zakonczony '\0'
 {
@@ -149,11 +136,18 @@ void printText(volatile char* txt)//txt musi byc zakonczony '\0'
 	usartSendByte('\n');
 }
 
+char uart_tx_buffer[40];
+
+void dma_print_text(uint8_t size)
+{
+	dma1_ch7_start(size);
+}
+
 void getAndShowTemperature()
 {
-	char txt[40];
-
 	float result = 0;
+
+	uint8_t size = 0;
 
 	int16_t raw_res = 0;
 	uint16_t hum_raw = 0;
@@ -164,29 +158,95 @@ void getAndShowTemperature()
 	readPressureRaw(&pressure_raw);
 
 	result = (float)raw_res / 10.0 - 6.2 ; // tempereature
-	sprintf(txt , "Temperature %f C \n\r" , result);
-	printText(txt);
+	size = sprintf(uart_tx_buffer , "Temperature %f C \n\r" , result);
+	dma_print_text(size);
+//	printText(txt);
 
 	result = (float)hum_raw / 10.0;// humidity
-	sprintf(txt , "Humidity %f % \n\r" , result);
-	printText(txt);
+//	size = sprintf(uart_tx_buffer , "Humidity %f % \n\r" , result);
+//	dma_print_text(size);
+//	printText(txt);
 
 	result = readPressureMillibars(pressure_raw);// pressure
-	sprintf(txt , "Pressure %f hPa \n\r" , result);
-	printText(txt);
+//	size = sprintf(uart_tx_buffer , "Pressure %f hPa \n\r" , result);
+//	dma_print_text(size);
+//	printText(txt);
+}
+
+extern "C" {
+
+void DMA1_Channel7_IRQHandler(void)
+{
+	GPIOA->BSRR |= GPIO_BSRR_BS5;
+	//transfer complete flag
+	if( DMA1->ISR & DMA_ISR_TCIF7 )
+	{
+		usartSendByte('X');
+		usartSendByte('X');
+		usartSendByte('X');
+		usartSendByte('X');
+		usartSendByte('X');
+		DMA1->IFCR |= DMA_IFCR_CTCIF7;//reset flag
+	}
+	else if (DMA1->ISR & DMA_ISR_HTIF7)//half transfer cpl
+	{
+		DMA1->IFCR |= DMA_IFCR_CHTIF7;//reset flag
+	}
+	else if ( DMA1->ISR & DMA_ISR_TEIF7)//error
+	{
+		DMA1->IFCR |= DMA_IFCR_CTEIF7;//reset flag
+	}
+}
+
+}
+
+template<typename T>
+class bg{
+public:
+	static void g(){
+		GPIOA->BSRR |= GPIO_BSRR_BS5;
+	}
+};
+
+extern "C"
+{
+
+void USART2_IRQHandler(void)
+{
+	bg<int>::g();
+}
+
 }
 
 int main(void)
 {
+	SystemInit();
 	clk_en();
 	gpioa_en();
-	turn_on_led();
 	usart2Setup();
+
+	DMA1->IFCR = 0xffff;
+
+	dma1_ch7_init();
+//	dma1_ch6_init();
+
+	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+
+	NVIC_SetPriority(DMA1_Channel6_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+
+//	dma1_ch6_config((uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer, 3);
+	dma1_ch7_config( (uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer);
+
+	__enable_irq();
+
 	setupI2C();
 
 //	resetLPS22();
 	setupLPS22();
 	setupHTS22();
+
 
 	getAndShowTemperature();
 

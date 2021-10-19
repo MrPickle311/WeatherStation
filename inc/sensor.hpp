@@ -2,7 +2,9 @@
 
 #include "i2c.hpp"
 
-using reg_t = volatile const uint8_t;
+//using reg_t = volatile const uint8_t;
+
+typedef volatile const uint8_t reg_t;
 
 reg_t dev_adr = 93 << 1;
 

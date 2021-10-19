@@ -13,13 +13,14 @@ void dma1_clk_enable()
 void enable_dma1_ch7_irq()
 {
 	//enable half transfer cpl , transfer cpl and transfer error irq's
+
 	DMA1_Channel7->CCR |= DMA_CCR_HTIE | DMA_CCR_TCIE | DMA_CCR_TEIE;
 }
 
 void dma1_ch7_init()
 {
 	dma1_clk_enable();
-	enable_dma_irq();
+	enable_dma1_ch7_irq();
 
 	//read from periph
 //	DMA1_Channel7->CCR &= ~DMA_CCR_DIR ;
@@ -28,7 +29,7 @@ void dma1_ch7_init()
 	DMA1_Channel7->CCR |= DMA_CCR_DIR ;
 
 	//enable circ mode
-	DMA1_Channel7->CCR |= DMA_CCR_CIRC;
+//	DMA1_Channel7->CCR |= DMA_CCR_CIRC;
 
 	//enable memory increment
 	DMA1_Channel7->CCR |= DMA_CCR_MINC;
@@ -41,35 +42,83 @@ void dma1_ch7_init()
 
 	//set prior = 0
 	DMA1_Channel7->CCR &= ~DMA_CCR_PL;
+
 }
 
-void dma1_ch7_config(uint32_t periph_adr , uint32_t mem_adr , uint16_t data_size)
+void dma1_ch7_config(uint32_t periph_adr , uint32_t mem_adr /*, uint16_t data_size*/)
 {
-	DMA1_Channel7->CNDTR = data_size;// set bytes count to transfer
+//	DMA1_Channel7->CNDTR = data_size;// set bytes count to transfer
 
 	DMA1_Channel7->CPAR = periph_adr;//set in periph src adr
 
 	DMA1_Channel7->CMAR = mem_adr;//set in memory destination adr
 
+//	DMA1_Channel7->CCR |= DMA_CCR_EN;
+}
+
+void dma1_ch7_start(uint8_t bytes_count)
+{
+	DMA1_Channel7->CNDTR = bytes_count;// set bytes count to transfer
 	DMA1_Channel7->CCR |= DMA_CCR_EN;
 }
 
-void DMA1_Channel7_IRQHandler()
+void enable_dma1_ch6_irq()
 {
-	//transfer complete flag
-	if( DMA1->ISR & DMA_ISR_TCIF7 )
-	{
-		DMA1->IFCR |= DMA_IFCR_CTCIF7;//reset flag
-	}
-	else if (DMA1->ISR & DMA_ISR_HTIF7)//half transfer cpl
-	{
-		DMA1->IFCR |= DMA_IFCR_CHTIF7;//reset flag
-	}
-	else if ( DMA1->ISR & DMA_ISR_TEIF7)//error
-	{
-		DMA1->IFCR |= DMA_IFCR_CTEIF7;//reset flag
-	}
+	//enable half transfer cpl , transfer cpl and transfer error irq's
+
+	DMA1_Channel6->CCR |= DMA_CCR_HTIE | DMA_CCR_TCIE | DMA_CCR_TEIE;
 }
+
+void dma1_ch6_init()
+{
+	dma1_clk_enable();
+	enable_dma1_ch6_irq();
+
+	//read from periph
+	DMA1_Channel6->CCR &= ~DMA_CCR_DIR ;
+
+	//read from memory
+//	DMA1_Channel6->CCR |= DMA_CCR_DIR ;
+
+	//enable circ mode
+//	DMA1_Channel6->CCR |= DMA_CCR_CIRC;
+
+	//enable memory increment
+	DMA1_Channel6->CCR |= DMA_CCR_MINC;
+
+	//set periph size = 8 bit
+	DMA1_Channel6->CCR &= ~DMA_CCR_PSIZE;
+
+	//set mem size = 8 bit
+	DMA1_Channel6->CCR &= ~DMA_CCR_MSIZE;
+
+	//set prior = 0
+	DMA1_Channel6->CCR &= ~DMA_CCR_PL;
+
+}
+
+void dma1_ch6_config(uint32_t periph_adr , uint32_t mem_adr , uint16_t data_size)
+{
+	DMA1_Channel6->CNDTR = data_size;// set bytes count to transfer
+
+	DMA1_Channel6->CPAR = periph_adr;//set in periph src adr
+
+	DMA1_Channel6->CMAR = mem_adr;//set in memory destination adr
+
+	DMA1_Channel6->CCR |= DMA_CCR_EN;
+}
+
+void usartSendByte (uint8_t byte)
+{
+   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
+
+   USART2->DR = byte;//push byte
+}
+
+
 
 
 
