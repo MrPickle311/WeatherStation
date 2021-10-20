@@ -7,6 +7,8 @@
 #include "dma.hpp"
 #include <string>
 #include <sstream>
+#include <map>
+#include <functional>
 
 #define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0
 
@@ -138,24 +140,6 @@ void printText(volatile char* txt)//txt musi byc zakonczony '\0'
 	usartSendByte('\n');
 }
 
-void getAndShowTemperature()
-{
-	 // tempereature
-
-	dma_print_text(size);
-//	printText(txt);
-
-	// humidity
-//	size = sprintf(uart_tx_buffer , "Humidity %f % \n\r" , result);
-//	dma_print_text(size);
-//	printText(txt);
-
-	// pressure
-//	size = sprintf(uart_tx_buffer , "Pressure %f hPa \n\r" , result);
-//	dma_print_text(size);
-//	printText(txt);
-}
-
 void timer1Setup()//500ms
 {
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;//oblokuj zegar dla TIM1
@@ -170,15 +154,20 @@ void timer1Setup()//500ms
 }
 
 
+std::string uart_tx_buffer;
 extern "C" {
 
 void DMA1_Channel7_IRQHandler(void)
 {
 //	GPIOA->BSRR |= GPIO_BSRR_BS5;
 	//transfer complete flag
+
+
 	if( DMA1->ISR & DMA_ISR_TCIF7 )
 	{
+		DMA1_Channel7->CCR &= ~DMA_CCR_EN;
 		DMA1->IFCR |= DMA_IFCR_CTCIF7;//reset flag
+		uart_tx_buffer.clear();
 	}
 	else if (DMA1->ISR & DMA_ISR_HTIF7)//half transfer cpl
 	{
@@ -190,7 +179,7 @@ void DMA1_Channel7_IRQHandler(void)
 	}
 }
 
-std::string uart_tx_buffer;
+}
 
 void loadTemperature()
 {
@@ -200,7 +189,11 @@ void loadTemperature()
 
 	HTS221_Get_Temperature(&raw_temp);
 	result = (float)raw_temp / 10.0 - 6.2 ;
-	size = sprintf(uart_tx_buffer , "t:%f;" , result);
+//	size = sprintf(uart_tx_buffer , "t:%f;" , result);
+
+	uart_tx_buffer.append("t:");
+	uart_tx_buffer.append(std::to_string(result));
+	uart_tx_buffer.append(";");
 }
 
 void loadPressure()
@@ -208,9 +201,15 @@ void loadPressure()
 	static uint8_t size = 0;
 	static float result = 0;
 	static uint32_t pressure_raw = 0;
-	result = readPressureMillibars(pressure_raw);
 
 	readPressureRaw(&pressure_raw);
+
+	result = readPressureMillibars(pressure_raw);
+
+	uart_tx_buffer.append("p:");
+	uart_tx_buffer.append(std::to_string(result));
+	uart_tx_buffer.append(";");
+
 }
 
 void loadHumidity()
@@ -219,47 +218,43 @@ void loadHumidity()
 	static float result = 0;
 	static uint16_t hum_raw = 0;
 
+	HTS221_Get_Humidity(&hum_raw);
+
 	result = (float)hum_raw / 10.0;
 
-	HTS221_Get_Humidity(&hum_raw);
+	uart_tx_buffer.append("h:");
+	uart_tx_buffer.append(std::to_string(result));
+	uart_tx_buffer.append(";");
 }
 
-void aqcuireData()
+void sendData(std::string_view str_to_send)
 {
-	static uint8_t size = 0;
-	static float result = 0;
+	dma1_ch7_config( (uint32_t)&USART2->DR , (uint32_t)&str_to_send[0]);
+	dma1_ch7_start(str_to_send.size());
 }
 
-void sendData(uint8_t size)
-{
-	dma1_ch7_start(size);
-}
+std::map< int , std::function<void()> > callbacks;
+uint8_t nmbr = 0 ;
+
+extern "C" {
 
 __attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
 {
 	if(TIM1->SR & TIM_SR_UIF)
 	{
 		TIM1->SR =~TIM_SR_UIF;
+
+		callbacks.at(nmbr)();
+		nmbr = ( nmbr + 1 ) % 3;
+
+//		loadTemperature();
+//		loadHumidity();
+//		loadPressure();
+
+		sendData(uart_tx_buffer);
+		turn_on_led();
+
 	}
-}
-
-
-}
-
-template<typename T>
-class bg{
-public:
-	static void g(){
-		GPIOA->BSRR |= GPIO_BSRR_BS5;
-	}
-};
-
-extern "C"
-{
-
-void USART2_IRQHandler(void)
-{
-	bg<int>::g();
 }
 
 }
@@ -271,9 +266,12 @@ int main(void)
 	gpioa_en();
 	usart2Setup();
 
-	uart_tx_buffer.resize(40);
+	callbacks[0] =  loadTemperature;
+	callbacks[1] =  loadPressure;
+	callbacks[2] =  loadHumidity;
 
-	timer1Setup()
+	uart_tx_buffer.reserve(40);
+
 
 	DMA1->IFCR = 0xffff;
 
@@ -287,12 +285,6 @@ int main(void)
 //	NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 	NVIC_SetPriority(TIM1_UP_IRQn , 0);
-
-//	dma1_ch6_config((uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer, 3);
-	dma1_ch7_config( (uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer);
-
-	__enable_irq();
-
 	setupI2C();
 
 //	resetLPS22();
@@ -300,7 +292,17 @@ int main(void)
 	setupHTS22();
 
 
-	getAndShowTemperature();
+	timer1Setup();
+//	dma1_ch6_config((uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer, 3);
+
+
+
+	__enable_irq();
+
+
+
+
+//	getAndShowTemperature();
 
 	while(1)
 	{
