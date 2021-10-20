@@ -108,15 +108,6 @@ void dma1_ch6_config(uint32_t periph_adr , uint32_t mem_adr , uint16_t data_size
 	DMA1_Channel6->CCR |= DMA_CCR_EN;
 }
 
-void usartSendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART2->DR = byte;//push byte
-}
 
 
 

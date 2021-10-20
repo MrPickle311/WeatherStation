@@ -71,6 +71,11 @@ void usart2_gpio_tx_en()
 	GPIOA->CRL   |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1;
 }
 
+void usart1_gpio_tx_en()
+{
+	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_0 | GPIO_CRH_MODE9_1;
+}
+
 void usart2_gpio_rx_en()
 {
 	GPIOA->CRL &= ~( GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 );   // Intput Mode For PA3
@@ -80,15 +85,35 @@ void usart2_gpio_rx_en()
 	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
 }
 
+void usart1_gpio_rx_en()
+{
+	GPIOA->CRH &= ~( GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1 );   // Intput Mode For PA3
+
+	GPIOA->CRH |= GPIO_CRH_CNF10_1 ;  // Input Pull Up/ Down For PA3
+
+	GPIOA->ODR |= GPIO_ODR_ODR10;  // Pull Up for PA3
+}
+
 void usart2_gpioa_en()
 {
 	usart2_gpio_tx_en();
 	usart2_gpio_rx_en();
 }
 
+void usart1_gpioa_en()
+{
+	usart1_gpio_tx_en();
+	usart1_gpio_rx_en();
+}
+
 void usart2_clk_en()
 {
 	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+}
+
+void usart1_clk_en()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
 }
 
 void usart2_config()
@@ -107,11 +132,34 @@ void usart2_config()
 	USART2->CR1 |=  USART_CR1_RE  | USART_CR1_TE ;  // enable rx and tx
 }
 
+void usart1_config()
+{
+	CLEAR_REG(USART1->CR1);
+
+	USART1->CR1 |= USART_CR1_UE;//enable usart2
+	USART1->CR3 |= USART_CR3_DMAT; // enable dma mode
+	USART1->CR3 |= USART_CR3_DMAR;
+
+//	USART2->CR1 |= USART_CR1_RXNEIE | USART_CR1_TXEIE;
+	NVIC_EnableIRQ(USART1_IRQn);
+
+	USART1->BRR = (12 << 0) | (34 << 4);//mantisa = 17 , fraction = 6
+
+	USART1->CR1 |=  USART_CR1_RE  | USART_CR1_TE ;  // enable rx and tx
+}
+
 void usart2Setup (void)
 {
 	usart2_gpioa_en();
 	usart2_clk_en();
 	usart2_config();
+}
+
+void usart1Setup (void)
+{
+	usart1_gpioa_en();
+	usart1_clk_en();
+	usart1_config();
 }
 
 uint8_t UART2_GetChar (void)
@@ -127,7 +175,25 @@ uint8_t UART2_GetChar (void)
 	return temp;
 }
 
+void usartSendByte (uint8_t byte)
+{
+   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
 
+   USART2->DR = byte;//push byte
+}
+
+void usart1SendByte (uint8_t byte)
+{
+   while (! ( USART1->SR & USART_SR_TXE ) ) // wait until buffer ready
+   {
+	   asm volatile ("nop");
+   }
+
+   USART1->DR = byte;//push byte
+}
 
 void printText(volatile char* txt)//txt musi byc zakonczony '\0'
 {
@@ -251,6 +317,8 @@ __attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
 //		loadHumidity();
 //		loadPressure();
 
+		usart1SendByte('a');
+
 		sendData(uart_tx_buffer);
 		turn_on_led();
 
@@ -265,6 +333,7 @@ int main(void)
 	clk_en();
 	gpioa_en();
 	usart2Setup();
+	usart1Setup();
 
 	callbacks[0] =  loadTemperature;
 	callbacks[1] =  loadPressure;
