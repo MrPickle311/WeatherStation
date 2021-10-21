@@ -245,6 +245,28 @@ void DMA1_Channel7_IRQHandler(void)
 	}
 }
 
+void DMA1_Channel4_IRQHandler(void)
+{
+//	GPIOA->BSRR |= GPIO_BSRR_BS5;
+	//transfer complete flag
+
+
+	if( DMA1->ISR & DMA_ISR_TCIF4 )
+	{
+		DMA1_Channel4->CCR &= ~DMA_CCR_EN;
+		DMA1->IFCR |= DMA_IFCR_CTCIF4;//reset flag
+		uart_tx_buffer.clear();
+	}
+	else if (DMA1->ISR & DMA_ISR_HTIF4)//half transfer cpl
+	{
+		DMA1->IFCR |= DMA_IFCR_CHTIF4;//reset flag
+	}
+	else if ( DMA1->ISR & DMA_ISR_TEIF4)//error
+	{
+		DMA1->IFCR |= DMA_IFCR_CTEIF4;//reset flag
+	}
+}
+
 }
 
 void loadTemperature()
@@ -295,8 +317,8 @@ void loadHumidity()
 
 void sendData(std::string_view str_to_send)
 {
-	dma1_ch7_config( (uint32_t)&USART2->DR , (uint32_t)&str_to_send[0]);
-	dma1_ch7_start(str_to_send.size());
+	dma1_ch4_config( (uint32_t)&USART1->DR , (uint32_t)&str_to_send[0]);
+	dma1_ch4_start(str_to_send.size());
 }
 
 std::map< int , std::function<void()> > callbacks;
@@ -317,7 +339,7 @@ __attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
 //		loadHumidity();
 //		loadPressure();
 
-		usart1SendByte('a');
+//		usart1SendByte('a');
 
 		sendData(uart_tx_buffer);
 		turn_on_led();
@@ -344,14 +366,14 @@ int main(void)
 
 	DMA1->IFCR = 0xffff;
 
-	dma1_ch7_init();
-//	dma1_ch6_init();
+//	dma1_ch7_init();
+	dma1_ch4_init();
 
-	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
-	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+//	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+//	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
-//	NVIC_SetPriority(DMA1_Channel6_IRQn, 0);
-//	NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+	NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel4_IRQn);
 
 	NVIC_SetPriority(TIM1_UP_IRQn , 0);
 	setupI2C();

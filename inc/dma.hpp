@@ -62,53 +62,56 @@ void dma1_ch7_start(uint8_t bytes_count)
 	DMA1_Channel7->CCR |= DMA_CCR_EN;
 }
 
-void enable_dma1_ch6_irq()
+void enable_dma1_ch4_irq()
 {
 	//enable half transfer cpl , transfer cpl and transfer error irq's
 
-	DMA1_Channel6->CCR |= DMA_CCR_HTIE | DMA_CCR_TCIE | DMA_CCR_TEIE;
+	DMA1_Channel4->CCR |= DMA_CCR_HTIE | DMA_CCR_TCIE | DMA_CCR_TEIE;
 }
 
-void dma1_ch6_init()
+void dma1_ch4_init()
 {
 	dma1_clk_enable();
-	enable_dma1_ch6_irq();
+	enable_dma1_ch4_irq();
 
 	//read from periph
-	DMA1_Channel6->CCR &= ~DMA_CCR_DIR ;
+//	DMA1_Channel4->CCR &= ~DMA_CCR_DIR ;
 
 	//read from memory
-//	DMA1_Channel6->CCR |= DMA_CCR_DIR ;
+	DMA1_Channel4->CCR |= DMA_CCR_DIR ;
 
 	//enable circ mode
 //	DMA1_Channel6->CCR |= DMA_CCR_CIRC;
 
 	//enable memory increment
-	DMA1_Channel6->CCR |= DMA_CCR_MINC;
+	DMA1_Channel4->CCR |= DMA_CCR_MINC;
 
 	//set periph size = 8 bit
-	DMA1_Channel6->CCR &= ~DMA_CCR_PSIZE;
+	DMA1_Channel4->CCR &= ~DMA_CCR_PSIZE;
 
 	//set mem size = 8 bit
-	DMA1_Channel6->CCR &= ~DMA_CCR_MSIZE;
+	DMA1_Channel4->CCR &= ~DMA_CCR_MSIZE;
 
 	//set prior = 0
-	DMA1_Channel6->CCR &= ~DMA_CCR_PL;
-
+	DMA1_Channel4->CCR &= ~DMA_CCR_PL;
 }
 
-void dma1_ch6_config(uint32_t periph_adr , uint32_t mem_adr , uint16_t data_size)
+void dma1_ch4_config(uint32_t periph_adr , uint32_t mem_adr /*, uint16_t data_size*/)
 {
-	DMA1_Channel6->CNDTR = data_size;// set bytes count to transfer
+//	DMA1_Channel7->CNDTR = data_size;// set bytes count to transfer
 
-	DMA1_Channel6->CPAR = periph_adr;//set in periph src adr
+	DMA1_Channel4->CPAR = periph_adr;//set in periph src adr
 
-	DMA1_Channel6->CMAR = mem_adr;//set in memory destination adr
+	DMA1_Channel4->CMAR = mem_adr;//set in memory destination adr
 
-	DMA1_Channel6->CCR |= DMA_CCR_EN;
+//	DMA1_Channel7->CCR |= DMA_CCR_EN;
 }
 
-
+void dma1_ch4_start(uint8_t bytes_count)
+{
+	DMA1_Channel4->CNDTR = bytes_count;// set bytes count to transfer
+	DMA1_Channel4->CCR |= DMA_CCR_EN;
+}
 
 
 
