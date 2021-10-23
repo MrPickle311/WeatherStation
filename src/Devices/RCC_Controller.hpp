@@ -34,6 +34,14 @@ public:
 	void waitUntilSetAsSystemClock();
 };
 
+enum class GPIO_Enable
+{
+	A = RCC_APB2ENR_IOPAEN ,
+	B = RCC_APB2ENR_IOPBEN ,
+	C = RCC_APB2ENR_IOPCEN ,
+	D = RCC_APB2ENR_IOPDEN
+};
+
 class RCC_Controller : public Singleton<RCC_Controller>
 {
 	friend class Singleton<RCC_Controller>;
@@ -42,6 +50,7 @@ private:
 public:
 	void enableHighSpeedClock();
 	void waitUntilHighSpeedClockReady();
+	void enableGPIOPort(GPIO_Enable port);
 };
 
 }

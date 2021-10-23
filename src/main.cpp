@@ -10,8 +10,7 @@
 #include <map>
 #include <functional>
 #include "../src/Devices/RCC_Controller.hpp"
-
-#define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0
+#include "../src/Devices/GPIO_Controller.hpp"
 
 void clk_en()
 {
@@ -31,9 +30,6 @@ void clk_en()
 	flash_controler.enablePrefetchBuffer();
 	flash_controler.setLatency(Device::FlashLatency::TwoWaitStates);
 
-	//APB2 & APB1 & AHB PRESCALERS
-	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_HPRE_DIV1 ;
-
 	auto&& pll_loop {Device::PLL_Loop::getInstance()};
 
 	pll_loop.enable();
@@ -45,6 +41,7 @@ void clk_en()
 void gpioa_en()
 {
 	//enable gpioa clock
+	Device::RCC_Controller::getInstance().enableGPIOPort(Device::GPIO_Enable::A);
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 
 	//pa5 push pull 10 mhz
@@ -53,7 +50,7 @@ void gpioa_en()
 
 void turn_on_led()
 {
-	GPIOA->BSRR |= GPIO_BSRR_BS5;
+	Device::GPIO_Device<Device::GPIO_Port::A,5>::getInstance().setHigh();
 }
 
 void usart2_gpio_tx_en()

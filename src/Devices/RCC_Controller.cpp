@@ -54,7 +54,8 @@ void PLL_Loop::waitUntilSetAsSystemClock()
 
 RCC_Controller::RCC_Controller()
 {
-
+	//APB2 & APB1 & AHB PRESCALERS
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_HPRE_DIV1 ;
 }
 
 void RCC_Controller::enableHighSpeedClock()
@@ -69,5 +70,13 @@ void RCC_Controller::waitUntilHighSpeedClockReady()
 		asm volatile ("nop");
 	}
 }
+
+
+void RCC_Controller::enableGPIOPort(GPIO_Enable port)
+{
+	RCC->APB2ENR |= static_cast<uint8_t>(port);
+}
+
+
 
 }
