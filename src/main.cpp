@@ -9,46 +9,37 @@
 #include <sstream>
 #include <map>
 #include <functional>
+#include "../src/Devices/RCC_Controller.hpp"
 
 #define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0
 
 void clk_en()
 {
-	RCC->CR |= RCC_CR_HSION;
+	auto&& rcc_controller {Device::RCC_Controller::getInstance()};
 
-		while( (RCC->CR & RCC_CR_HSIRDY) == 0)
-		{
-			asm volatile ("nop");
-		}
+	rcc_controller.enableHighSpeedClock();
+	rcc_controller.waitUntilHighSpeedClockReady();
 
-		//power interface clock
-		RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	//power interface clock
+	//the following setting enables PWR_CR and PWR_CSR registers
+	//i dont need it now , but i will make voltage control later
+	//RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 
-		//prefetch buffer for 64 MHz
-		FLASH->ACR |= FLASH_ACR_LATENCY_1 | FLASH_ACR_PRFTBE;
+	//fit flash mem access to SYSCLK = 64 MHz
+	//prefetch -> explanation page 58 in the user manual
+	auto&& flash_controler {Device::FlashController::getInstance()};
+	flash_controler.enablePrefetchBuffer();
+	flash_controler.setLatency(Device::FlashLatency::TwoWaitStates);
 
-		//APB2 & APB1 & AHB PRESCALERS
-		RCC->CFGR |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_HPRE_DIV1 ;
+	//APB2 & APB1 & AHB PRESCALERS
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_HPRE_DIV1 ;
 
-		//Configure the MAIN PLL
-		RCC->CFGR |= RCC_CFGR_PLLMULL16_Msk | RCC_CFGR_PLLXTPRE_HSI_DIV2;
+	auto&& pll_loop {Device::PLL_Loop::getInstance()};
 
-		//run pll loop
-		RCC->CR |= RCC_CR_PLLON;
-
-		while( (RCC->CR & RCC_CR_PLLRDY) == 0)
-		{
-			asm volatile ("nop");
-		}
-
-		//select clock source and wait for response
-
-		RCC->CFGR |= RCC_CFGR_SW_PLL;
-
-		while( (RCC->CFGR & RCC_CFGR_SWS_PLL) == 0)
-		{
-			asm volatile ("nop");
-		}
+	pll_loop.enable();
+	pll_loop.waitForReady();
+	pll_loop.setAsSystemClock();
+	pll_loop.waitUntilSetAsSystemClock();
 }
 
 void gpioa_en()
