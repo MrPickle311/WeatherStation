@@ -59,12 +59,12 @@ RCC_Controller::RCC_Controller()
 
 void RCC_Controller::enableHighSpeedClock()
 {
-	RCC->CR |= RCC_CR_PLLON;
+	RCC->CR |= RCC_CR_HSION;
 }
 
 void RCC_Controller::waitUntilHighSpeedClockReady()
 {
-	while( (RCC->CR & RCC_CR_PLLRDY) == 0)
+	while( (RCC->CR & RCC_CR_HSIRDY) == 0)
 	{
 		asm volatile ("nop");
 	}
