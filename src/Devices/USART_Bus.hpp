@@ -6,13 +6,10 @@
 
 namespace Device
 {
-//static std::map<Key*, ObjectType> instances_;
 
 class USART_Bus : public Multiton<USART_Bus , USART_TypeDef* >
 {
 	friend class Multiton<USART_Bus , USART_TypeDef* >;
-	friend class std::pair<USART_Bus , USART_TypeDef* >;
-	friend class std::tuple<USART_Bus , USART_TypeDef* >;
 private:
 	USART_TypeDef* usart_;
 private:

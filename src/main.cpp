@@ -229,10 +229,6 @@ void DMA1_Channel7_IRQHandler(void)
 
 void DMA1_Channel4_IRQHandler(void)
 {
-//	GPIOA->BSRR |= GPIO_BSRR_BS5;
-	//transfer complete flag
-
-
 	if( DMA1->ISR & DMA_ISR_TCIF4 )
 	{
 		DMA1_Channel4->CCR &= ~DMA_CCR_EN;
@@ -299,7 +295,11 @@ void loadHumidity()
 
 void sendData(std::string_view str_to_send)
 {
-	dma1_ch4_config( (uint32_t)&USART1->DR , (uint32_t)&str_to_send[0]);
+	static auto dma{Device::DMA_ChannelController::get(DMA1_Channel4)};
+
+	dma.setMemoryAddress(&str_to_send[0]);
+	dma.setPeripheralAddress(&USART1->DR);
+
 	dma1_ch4_start(str_to_send.size());
 }
 
