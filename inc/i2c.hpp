@@ -2,6 +2,7 @@
 
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
+#include "../src/Devices/GPIO_Controller.hpp"
 
 void enableGPIOB()
 {
@@ -26,7 +27,11 @@ void setupI2Clocks()
 
 void pullUpI2CPins()
 {
-	GPIOB->ODR |= GPIO_ODR_ODR8 | GPIO_ODR_ODR9;
+//	GPIOB->ODR |= GPIO_ODR_ODR8 | GPIO_ODR_ODR9;
+	using namespace Device;
+
+	GPIO_Device<GPIO_Port::B,7>::getInstance().setHigh();
+	GPIO_Device<GPIO_Port::B,6>::getInstance().setHigh();
 }
 
 void remapI2CPins()
@@ -36,13 +41,16 @@ void remapI2CPins()
 
 void setupI2CPins()
 {
+	using namespace Device;
 	//select alternate functions for pb9 and pb8 , up to 50 mhz , open-drain
 
 	//sda
-	GPIOB->CRL |= GPIO_CRL_CNF7 | GPIO_CRL_MODE7;
+	GPIO_Device<GPIO_Port::B,7>::getInstance().setAlternateOpenDrain(PinFrequency::F_50MHz);
+//	GPIOB->CRL |= GPIO_CRL_CNF7 | GPIO_CRL_MODE7;
 
 	//scl
-	GPIOB->CRL |= GPIO_CRL_CNF6 | GPIO_CRL_MODE6;
+	GPIO_Device<GPIO_Port::B,6>::getInstance().setAlternateOpenDrain(PinFrequency::F_50MHz);
+//	GPIOB->CRL |= GPIO_CRL_CNF6 | GPIO_CRL_MODE6;
 
 	pullUpI2CPins();
 //	remapI2CPins(); not working

@@ -10,7 +10,6 @@
 #include <map>
 #include <functional>
 #include "../src/Devices/RCC_Controller.hpp"
-#include "../src/Devices/GPIO_Controller.hpp"
 
 void clk_en()
 {
@@ -40,12 +39,12 @@ void clk_en()
 
 void gpioa_en()
 {
+	using namespace Device;
 	//enable gpioa clock
-	Device::RCC_Controller::getInstance().enableGPIOPort(Device::GPIO_Enable::A);
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+	RCC_Controller::getInstance().enableGPIOPort(GPIO_Enable::A);
 
 	//pa5 push pull 10 mhz
-	GPIOA->CRL = GPIO_CRL_MODE5_0 ;
+	GPIO_Device<GPIO_Port::A,5>::getInstance().setOutputPushPull(PinFrequency::F_10MHz);
 }
 
 void turn_on_led()
@@ -55,31 +54,50 @@ void turn_on_led()
 
 void usart2_gpio_tx_en()
 {
+	using namespace Device;
 	//pa2 alternate function , push pull , up to 50 MHz ( usart 2 works with 32 mhz )
-	GPIOA->CRL   |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1;
+//	GPIOA->CRL   |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1;
+	GPIO_Device<GPIO_Port::A,2>::getInstance().setAlternatePushPull(PinFrequency::F_50MHz);
 }
 
 void usart1_gpio_tx_en()
 {
-	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_0 | GPIO_CRH_MODE9_1;
+//	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_0 | GPIO_CRH_MODE9_1;
+	using namespace Device;
+	GPIO_Device<GPIO_Port::A,9>::getInstance().setAlternatePushPull(PinFrequency::F_50MHz);
+
 }
 
 void usart2_gpio_rx_en()
 {
-	GPIOA->CRL &= ~( GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 );   // Intput Mode For PA3
+	using namespace Device;
 
-	GPIOA->CRL |= GPIO_CRL_CNF3_1 ;  // Input Pull Up/ Down For PA3
+	auto&& device {GPIO_Device<GPIO_Port::A,3>::getInstance()};
 
-	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
+	device.setInputPullUpPullDown();
+	device.setHigh();
+
+//	GPIOA->CRL &= ~( GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 );   // Intput Mode For PA3
+
+//	GPIOA->CRL |= GPIO_CRL_CNF3_1 ;  // Input Pull Up/ Down For PA3
+
+//	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
 }
 
 void usart1_gpio_rx_en()
 {
-	GPIOA->CRH &= ~( GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1 );   // Intput Mode For PA3
+//	GPIOA->CRH &= ~( GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1 );   // Intput Mode For PA3
 
-	GPIOA->CRH |= GPIO_CRH_CNF10_1 ;  // Input Pull Up/ Down For PA3
+//	GPIOA->CRH |= GPIO_CRH_CNF10_1 ;  // Input Pull Up/ Down For PA3
 
-	GPIOA->ODR |= GPIO_ODR_ODR10;  // Pull Up for PA3
+//	GPIOA->ODR |= GPIO_ODR_ODR10;  // Pull Up for PA3
+
+	using namespace Device;
+
+	auto&& device {GPIO_Device<GPIO_Port::A,10>::getInstance()};
+
+	device.setInputPullUpPullDown();
+	device.setHigh();
 }
 
 void usart2_gpioa_en()
