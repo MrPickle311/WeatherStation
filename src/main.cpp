@@ -10,6 +10,8 @@
 #include <map>
 #include <functional>
 #include "../src/Devices/RCC_Controller.hpp"
+#include "../src/Devices/USART_Bus.hpp"
+
 
 void clk_en()
 {
@@ -55,14 +57,12 @@ void turn_on_led()
 void usart2_gpio_tx_en()
 {
 	using namespace Device;
-	//pa2 alternate function , push pull , up to 50 MHz ( usart 2 works with 32 mhz )
-//	GPIOA->CRL   |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1;
+	//( usart 2 works with 32 mhz )
 	GPIO_Device<GPIO_Port::A,2>::getInstance().setAlternatePushPull(PinFrequency::F_50MHz);
 }
 
 void usart1_gpio_tx_en()
 {
-//	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_0 | GPIO_CRH_MODE9_1;
 	using namespace Device;
 	GPIO_Device<GPIO_Port::A,9>::getInstance().setAlternatePushPull(PinFrequency::F_50MHz);
 
@@ -76,22 +76,10 @@ void usart2_gpio_rx_en()
 
 	device.setInputPullUpPullDown();
 	device.setHigh();
-
-//	GPIOA->CRL &= ~( GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 );   // Intput Mode For PA3
-
-//	GPIOA->CRL |= GPIO_CRL_CNF3_1 ;  // Input Pull Up/ Down For PA3
-
-//	GPIOA->ODR |= GPIO_ODR_ODR3;  // Pull Up for PA3
 }
 
 void usart1_gpio_rx_en()
 {
-//	GPIOA->CRH &= ~( GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1 );   // Intput Mode For PA3
-
-//	GPIOA->CRH |= GPIO_CRH_CNF10_1 ;  // Input Pull Up/ Down For PA3
-
-//	GPIOA->ODR |= GPIO_ODR_ODR10;  // Pull Up for PA3
-
 	using namespace Device;
 
 	auto&& device {GPIO_Device<GPIO_Port::A,10>::getInstance()};
@@ -124,34 +112,22 @@ void usart1_clk_en()
 
 void usart2_config()
 {
-	CLEAR_REG(USART2->CR1);
-
-	USART2->CR1 |= USART_CR1_UE;//enable usart2
-	USART2->CR3 |= USART_CR3_DMAT; // enable dma mode
-	USART2->CR3 |= USART_CR3_DMAR;
-
-//	USART2->CR1 |= USART_CR1_RXNEIE | USART_CR1_TXEIE;
-	NVIC_EnableIRQ(USART2_IRQn);
-
-	USART2->BRR = (6 << 0) | (17 << 4);//mantisa = 17 , fraction = 6
-
-	USART2->CR1 |=  USART_CR1_RE  | USART_CR1_TE ;  // enable rx and tx
+	using namespace Device;
+	auto&& usart {USART_Bus::get(USART2)};
+	usart.enableBus();
+	usart.enableDMAForTransmitter();
+	usart.setupBaudRate(115200, 32'000'000);
+	usart.enableTransmitter();
 }
 
 void usart1_config()
 {
-	CLEAR_REG(USART1->CR1);
-
-	USART1->CR1 |= USART_CR1_UE;//enable usart2
-	USART1->CR3 |= USART_CR3_DMAT; // enable dma mode
-	USART1->CR3 |= USART_CR3_DMAR;
-
-//	USART2->CR1 |= USART_CR1_RXNEIE | USART_CR1_TXEIE;
-	NVIC_EnableIRQ(USART1_IRQn);
-
-	USART1->BRR = (12 << 0) | (34 << 4);//mantisa = 17 , fraction = 6
-
-	USART1->CR1 |=  USART_CR1_RE  | USART_CR1_TE ;  // enable rx and tx
+	using namespace Device;
+	auto&& usart {USART_Bus::get(USART1)};
+	usart.enableBus();
+	usart.enableDMAForTransmitter();
+	usart.setupBaudRate(115200, 64'000'000);
+	usart.enableTransmitter();
 }
 
 void usart2Setup (void)
@@ -340,12 +316,6 @@ __attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
 
 		callbacks.at(nmbr)();
 		nmbr = ( nmbr + 1 ) % 3;
-
-//		loadTemperature();
-//		loadHumidity();
-//		loadPressure();
-
-//		usart1SendByte('a');
 
 		sendData(uart_tx_buffer);
 		turn_on_led();

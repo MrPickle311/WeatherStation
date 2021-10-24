@@ -1,29 +1,34 @@
-/*
- * USART_Device.hpp
- *
- *  Created on: 21 Oct 2021
- *      Author: Damian
- */
+#pragma once
 
-#ifndef DEVICES_USART_BUS_HPP_
-#define DEVICES_USART_BUS_HPP_
+#include "DeviceTraits.hpp"
+#include "stm32f1xx.h"
+#include "stm32f1xx_nucleo.h"
 
 namespace Device
 {
+//static std::map<Key*, ObjectType> instances_;
 
-	class USART_Bus
-	{
-	public:
-		virtual ~USART_Bus() = default;
-		USART_Bus(const USART_Bus &other) = delete;
-		USART_Bus(USART_Bus &&other) = delete;
-		USART_Bus& operator=(const USART_Bus &other) = delete;
-		USART_Bus& operator=(USART_Bus &&other) = delete;
+class USART_Bus : public Multiton<USART_Bus , USART_TypeDef* >
+{
+	friend class Multiton<USART_Bus , USART_TypeDef* >;
+	friend class std::pair<USART_Bus , USART_TypeDef* >;
+	friend class std::tuple<USART_Bus , USART_TypeDef* >;
+private:
+	USART_TypeDef* usart_;
+private:
+	void resetControlRegisters();
+private:
+	USART_Bus(USART_TypeDef* usart);
+public:
+	void enableBus();
 
-	private:
-		USART_Bus();
-	};
+	void enableTransmitter();
+	void enableReceiver();
 
-} /* namespace Device */
+	void enableDMAForTransmitter();
+	void enableDMAForReceiver();
 
-#endif /* DEVICES_USART_BUS_HPP_ */
+	void setupBaudRate(uint32_t baud_value, uint32_t peripheral_frequency);
+};
+
+}

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 #include "DeviceTraits.hpp"

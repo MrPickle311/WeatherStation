@@ -20,7 +20,7 @@ template <typename ObjectType, typename Key>
 class Multiton
 {
 public:
-	static ObjectType& get(const Key& key)
+	static ObjectType& get(Key&& key)
 	{
 		if (const auto instance = instances_.find(key);
         	instance != instances_.end())
@@ -28,14 +28,41 @@ public:
 			return instance->second;
 		}
 
-		auto instance {ObjectType{}};
-		instances_[key] = instance;
+		instances_.insert( std::make_pair(key, ObjectType{key}) );
 
-		return instance;
+		return instances_.at(key);
   }
-private:
+protected:
 	static std::map<Key, ObjectType> instances_;
 };
+
+//pointer specalization
+template <typename ObjectType, typename Key>
+class Multiton<ObjectType,Key*>
+{
+public:
+	static ObjectType& get(Key* key)
+	{
+		if (const auto instance = instances_.find(key);
+        	instance != instances_.end())
+		{
+			return instance->second;
+		}
+
+		instances_.insert( std::make_pair(key, ObjectType{key}) );
+
+		return instances_.at(key);
+  }
+protected:
+	static std::map<Key*, ObjectType> instances_;
+};
+
+
+template <typename ObjectType, typename Key>
+std::map<Key, ObjectType> Multiton<ObjectType,Key>::instances_;
+
+template <typename ObjectType, typename Key>
+std::map<Key*, ObjectType> Multiton<ObjectType,Key*>::instances_;
 
 }
 
