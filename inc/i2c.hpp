@@ -3,6 +3,7 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 #include "../src/Devices/GPIO_Controller.hpp"
+#include "../src/Devices/I2C_Bus.hpp"
 
 void enableGPIOB()
 {
@@ -18,8 +19,9 @@ void setupI2Clocks()
 {
 	RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
 
-	I2C1->CR1 = 0x0;
-	I2C1->CR2 = 0x0;
+
+//	I2C1->CR1 = 0x0;
+//	I2C1->CR2 = 0x0;
 
 	enableGPIOB();
 	enableI2CClock();
@@ -58,8 +60,9 @@ void setupI2CPins()
 
 void resetI2CBus()
 {
-	I2C1->CR1 |= I2C_CR1_SWRST;
-	I2C1->CR1 &= ~I2C_CR1_SWRST;
+	Device::I2C_Bus::get(I2C1).resetBus();
+//	I2C1->CR1 |= I2C_CR1_SWRST;
+//	I2C1->CR1 &= ~I2C_CR1_SWRST;
 }
 
 void setupI2CSpeed()
@@ -71,7 +74,8 @@ void setupI2CSpeed()
 
 void enableI2C()
 {
-	I2C1->CR1 |= I2C_CR1_PE;
+	Device::I2C_Bus::get(I2C1).enable();
+//	I2C1->CR1 |= I2C_CR1_PE;
 }
 
 void I2C_Start()

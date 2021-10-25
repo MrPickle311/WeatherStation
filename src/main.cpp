@@ -12,7 +12,6 @@
 #include "../src/Devices/RCC_Controller.hpp"
 #include "../src/Devices/USART_Bus.hpp"
 
-
 void clk_en()
 {
 	auto&& rcc_controller {Device::RCC_Controller::getInstance()};
@@ -254,7 +253,7 @@ void loadTemperature()
 	static int16_t raw_temp = 0;
 
 	HTS221_Get_Temperature(&raw_temp);
-	result = (float)raw_temp / 10.0 - 6.2 ;
+	result = (float)raw_temp / 10.0 /*- 6.2*/ ;
 //	size = sprintf(uart_tx_buffer , "t:%f;" , result);
 
 	uart_tx_buffer.append("t:");

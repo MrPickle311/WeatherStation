@@ -1,4 +1,5 @@
 #include "I2C_Bus.hpp"
+#include <cmath>
 
 namespace Device
 {
@@ -44,7 +45,7 @@ void I2C_Bus::readSingleByte(uint8_t address , uint8_t* buffer)
 	putByteToBuffer(buffer, 0);
 }
 
-void I2C_Bus::startReading(uint8_t* buffer , uint16_t size)
+void I2C_Bus::startReading(uint8_t address, uint8_t* buffer , uint16_t size)
 {
 	auto remaining_bytes_count {size};
 
@@ -72,7 +73,7 @@ void I2C_Bus::finishReading(uint8_t* buffer , uint16_t size)
 	putByteToBuffer(buffer, size - 1);
 }
 
-void beginTransmission(uint8_t address , uint8_t reg_adr)
+void I2C_Bus::beginTransmission(uint8_t address , uint8_t reg_adr)
 {
 	start();
 	sendAddress(address);
@@ -160,7 +161,7 @@ void I2C_Bus::readBytes(uint8_t address, uint8_t *buffer, uint16_t size)
 		return;
 	}
 
-	startReading(buffer, size);
+	startReading(address, buffer, size);
 	finishReading(buffer, size);
 }
 

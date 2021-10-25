@@ -9,6 +9,7 @@ namespace Device
 
 class I2C_Bus : public Multiton<I2C_Bus , I2C_TypeDef* >
 {
+	friend class Multiton<I2C_Bus , I2C_TypeDef*>;
 private:
 	volatile I2C_TypeDef* i2c_;
 private:
@@ -20,7 +21,7 @@ private:
 
 	void readSingleByte(uint8_t address , uint8_t* buffer);
 
-	void startReading(uint8_t* buffer , uint16_t size);
+	void startReading(uint8_t address, uint8_t* buffer , uint16_t size);
 	void finishReading(uint8_t* buffer , uint16_t size);
 
 	void beginTransmission(uint8_t address , uint8_t reg_adr);
