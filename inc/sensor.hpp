@@ -39,14 +39,9 @@ void resetLPS22()
 	reg_t mem_reset_val = 0x80;
 	reg_t auto_incremet_disable_val = 0x10;
 
-
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG2, soft_reset_val);
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG2, mem_reset_val);
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG2, auto_incremet_disable_val);
-
-//	I2C_WriteToMem(dev_adr, CTRL_REG2 , soft_reset_val);
-//	I2C_WriteToMem(dev_adr, CTRL_REG2 , mem_reset_val);
-//	I2C_WriteToMem(dev_adr, CTRL_REG2 , auto_incremet_disable_val);
 }
 
 void setupLPS22()
@@ -54,8 +49,6 @@ void setupLPS22()
 	static reg_t config = 0x30;
 
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG1, config);
-
-//	I2C_WriteToMem(dev_adr, CTRL_REG1 , config);
 }
 
 void setupHTS22()
@@ -63,7 +56,6 @@ void setupHTS22()
 	static reg_t config = 0x83;
 
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(hts22_adr, hts22_CTRL_REG1, config);
-//	I2C_WriteToMem(hts22_adr, hts22_CTRL_REG1 , config);
 }
 
 void HTS221_Get_Temperature(int16_t *value)
@@ -76,14 +68,11 @@ void HTS221_Get_Temperature(int16_t *value)
 	auto&& i2c {Device::I2C_Bus::get(I2C1)};
 
 	/*1. Read from 0x32 & 0x33 registers the value of coefficients T0_degC_x8 and T1_degC_x8*/
-//	 I2C_ReadFromMem(hts22_adr, 0x32, &buffer[0] , 1);
-//	 I2C_ReadFromMem(hts22_adr, 0x32, &buffer[1] , 1);
 
 	i2c.readFromExternRegister(hts22_adr, 0x32, &buffer[0], 1);
 	i2c.readFromExternRegister(hts22_adr, 0x33, &buffer[1], 1);
 
 	/*2. Read from 0x35 register the value of the MSB bits of T1_degC and T0_degC */
-//	 I2C_ReadFromMem(hts22_adr, 0x35, &tmp , 1);
 
 	i2c.readFromExternRegister(hts22_adr, 0x35, &tmp, 1);
 
@@ -96,15 +85,11 @@ void HTS221_Get_Temperature(int16_t *value)
 
 
 	/*3. Read from 0x3C & 0x3D registers the value of T0_OUT*/
-//	 I2C_ReadFromMem(hts22_adr, 0x3C , &buffer[0] , 1);
-//	 I2C_ReadFromMem(hts22_adr, 0x3D , &buffer[1] , 1);
 
 	i2c.readFromExternRegister(hts22_adr, 0x3C, &buffer[0], 1);
 	i2c.readFromExternRegister(hts22_adr, 0x3D, &buffer[1], 1);
 
 	/*4. Read from 0x3E & 0x3F registers the value of T1_OUT*/
-//	 I2C_ReadFromMem(hts22_adr, 0x3E , &buffer[2] , 1);
-//	 I2C_ReadFromMem(hts22_adr, 0x3F , &buffer[3] , 1);
 
 	i2c.readFromExternRegister(hts22_adr, 0x3E, &buffer[2], 1);
 	i2c.readFromExternRegister(hts22_adr, 0x3F, &buffer[3], 1);
@@ -113,8 +98,6 @@ void HTS221_Get_Temperature(int16_t *value)
 	 T1_out = (((uint16_t)buffer[3])<<8) | (uint16_t)buffer[2];
 
 	/* 5.Read from 0x2A & 0x2B registers the value T_OUT (ADC_OUT).*/
-//	 I2C_ReadFromMem(hts22_adr, hts22_TEMP_OUT_L , &buffer[0] , 1);
-//	 I2C_ReadFromMem(hts22_adr, hts22_TEMP_OUT_H , &buffer[1] , 1);
 
 	i2c.readFromExternRegister(hts22_adr, hts22_TEMP_OUT_L, &buffer[0], 1);
 	i2c.readFromExternRegister(hts22_adr, hts22_TEMP_OUT_H, &buffer[1], 1);
@@ -184,9 +167,6 @@ void readPressureRaw(uint32_t* result)
 	i2c.readFromExternRegister(dev_adr, PRESS_OUT_XL, &press_xl, 1);
 	i2c.readFromExternRegister(dev_adr, PRESS_OUT_L, &press_l ,  1);
 	i2c.readFromExternRegister(dev_adr, PRESS_OUT_H, &press_H, 1);
-//	I2C_ReadFromMem(dev_adr , PRESS_OUT_XL  , &press_xl , 1 );
-//	I2C_ReadFromMem(dev_adr , PRESS_OUT_L  , &press_l  , 1 );
-//	I2C_ReadFromMem(dev_adr , PRESS_OUT_H , &press_H , 1 );
 
 	*result = ( (press_H << 16) ) | (press_l << 8) | press_xl ;
 }

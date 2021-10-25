@@ -206,11 +206,7 @@ extern "C" {
 
 void DMA1_Channel7_IRQHandler(void)
 {
-//	GPIOA->BSRR |= GPIO_BSRR_BS5;
-	//transfer complete flag
-
-
-	if( DMA1->ISR & DMA_ISR_TCIF7 )
+	if( DMA1->ISR & DMA_ISR_TCIF7 ) //transfer complete flag
 	{
 		DMA1_Channel7->CCR &= ~DMA_CCR_EN;
 		DMA1->IFCR |= DMA_IFCR_CTCIF7;//reset flag
@@ -353,7 +349,6 @@ int main(void)
 	NVIC_SetPriority(TIM1_UP_IRQn , 0);
 	setupI2C();
 
-//	resetLPS22();
 	setupLPS22();
 	setupHTS22();
 
