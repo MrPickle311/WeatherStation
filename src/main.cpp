@@ -11,6 +11,7 @@
 #include <functional>
 #include "../src/Devices/RCC_Controller.hpp"
 #include "../src/Devices/USART_Bus.hpp"
+#include "../src/Devices/Timer.hpp"
 
 void clk_en()
 {
@@ -143,60 +144,19 @@ void usart1Setup (void)
 	usart1_config();
 }
 
-uint8_t UART2_GetChar (void)
-{
-	static uint8_t temp;
-
-	while (! ( USART2->SR & USART_SR_RXNE ) )  // Wait for RXNE to SET
-	{
-		asm volatile ("nop");
-	}
-
-	temp = USART2->DR;  // read the data.
-	return temp;
-}
-
-void usartSendByte (uint8_t byte)
-{
-   while (! ( USART2->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART2->DR = byte;//push byte
-}
-
-void usart1SendByte (uint8_t byte)
-{
-   while (! ( USART1->SR & USART_SR_TXE ) ) // wait until buffer ready
-   {
-	   asm volatile ("nop");
-   }
-
-   USART1->DR = byte;//push byte
-}
-
-void printText(volatile char* txt)//txt musi byc zakonczony '\0'
-{
-	while(*txt)
-	{
-		usartSendByte(*txt);
-		++txt;
-	}
-	usartSendByte('\r');
-	usartSendByte('\n');
-}
-
 void timer1Setup()//500ms
 {
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;//oblokuj zegar dla TIM1
-	TIM1->PSC = 64000 - 1;//preskaler
-	TIM1->ARR = 500 - 1;//odliczana wartosc
 
-	TIM1-> CR1 |= TIM_CLOCKDIVISION_DIV1;//podzielnik zegara 1
-	TIM1-> DIER |= TIM_DIER_UIE ;//odpal przerwania
+	auto&& timer{Device::Timer::get(TIM1)};
 
-	TIM1->CR1 |= TIM_CR1_CEN;//odpal licznik
+	timer.setPrescaler(64'000);
+	timer.setTriggerValue(500);
+
+	timer.setClockDivision(Device::TimerClockDivision::Div1);
+	timer.enableUpInterrupt();
+	timer.enable();
+
 	NVIC_EnableIRQ(TIM1_UP_IRQn);////odpal przerwania
 }
 
@@ -249,8 +209,7 @@ void loadTemperature()
 	static int16_t raw_temp = 0;
 
 	HTS221_Get_Temperature(&raw_temp);
-	result = (float)raw_temp / 10.0 /*- 6.2*/ ;
-//	size = sprintf(uart_tx_buffer , "t:%f;" , result);
+	result = (float)raw_temp / 10.0;
 
 	uart_tx_buffer.append("t:");
 	uart_tx_buffer.append(std::to_string(result));
@@ -356,14 +315,7 @@ int main(void)
 	timer1Setup();
 //	dma1_ch6_config((uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer, 3);
 
-
-
 	__enable_irq();
-
-
-
-
-//	getAndShowTemperature();
 
 	while(1)
 	{

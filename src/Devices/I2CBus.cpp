@@ -20,7 +20,7 @@ void I2C_Bus::waitForBitSet(uint8_t bit_mask)
 
 void I2C_Bus::clearStatusFlags()
 {
-	volatile uint8_t temp = I2C1->SR1 | I2C1->SR2;
+	[[maybe_unused]] volatile uint8_t temp = I2C1->SR1 | I2C1->SR2;
 }
 
 uint8_t I2C_Bus::readByte()
