@@ -11,11 +11,11 @@ class USART_Bus : public Multiton<USART_Bus , USART_TypeDef* >
 {
 	friend class Multiton<USART_Bus , USART_TypeDef* >;
 private:
-	USART_TypeDef* usart_;
+	volatile USART_TypeDef* usart_;
 private:
 	void resetControlRegisters();
 private:
-	USART_Bus(USART_TypeDef* usart);
+	USART_Bus(volatile USART_TypeDef* usart);
 public:
 	void enableBus();
 

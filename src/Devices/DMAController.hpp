@@ -23,9 +23,9 @@ class DMA_ChannelController : public Multiton<DMA_ChannelController,DMA_Channel_
 {
 	friend class Multiton<DMA_ChannelController , DMA_Channel_TypeDef* >;
 private:
-	DMA_Channel_TypeDef* channel_;
+	volatile DMA_Channel_TypeDef* channel_;
 private:
-	DMA_ChannelController(DMA_Channel_TypeDef* channel);
+	DMA_ChannelController(volatile DMA_Channel_TypeDef* channel);
 private:
 	void setControlRegisterBit(uint8_t bit_mask);
 public:

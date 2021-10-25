@@ -3,9 +3,11 @@
 
 namespace Device
 {
-USART_Bus::USART_Bus(USART_TypeDef* usart):
+USART_Bus::USART_Bus(volatile USART_TypeDef* usart):
 		usart_{usart}
-{}
+{
+	resetControlRegisters();
+}
 
 void USART_Bus::resetControlRegisters()
 {

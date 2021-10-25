@@ -3,7 +3,7 @@
 namespace Device
 {
 
-DMA_ChannelController::DMA_ChannelController(DMA_Channel_TypeDef* channel):
+DMA_ChannelController::DMA_ChannelController(volatile DMA_Channel_TypeDef* channel):
 		channel_{channel}
 {}
 
