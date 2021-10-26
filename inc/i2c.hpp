@@ -51,26 +51,11 @@ void setupI2CPins()
 //	remapI2CPins(); not working
 }
 
-void resetI2CBus()
-{
-	Device::I2C_Bus::get(I2C1).resetBus();
-}
-
-void setupI2CSpeed()
-{
-	Device::I2C_Bus::get(I2C1).setupSlowSpeedMode(32'000'000);
-}
-
-void enableI2C()
-{
-	Device::I2C_Bus::get(I2C1).enable();
-}
-
 void setupI2C()
 {
 	setupI2Clocks();
 	setupI2CPins();
-	resetI2CBus();
-	setupI2CSpeed();
-	enableI2C();
+	Device::I2C_Bus::get(I2C1).resetBus();
+	Device::I2C_Bus::get(I2C1).setupSlowSpeedMode(32'000'000);
+	Device::I2C_Bus::get(I2C1).enable();
 }

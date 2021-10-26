@@ -126,7 +126,6 @@ uint16_t HTS22::getHumidity()
 
 	result = tmp / ( H1_T0_out - H0_T0_out ) + H0_rh * 10 ;
 
-	//MAYBE DELETE IT ?
 	/* Saturation condition*/
 	 if( result > 1000 )
 	 {
