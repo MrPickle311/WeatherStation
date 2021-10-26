@@ -207,12 +207,16 @@ void DMA1_Channel4_IRQHandler(void)
 
 }
 
+Device::LPS_22 lps22 {Device::I2C_Bus::get(I2C1)};
+Device::HTS22 hts22 {Device::I2C_Bus::get(I2C1)};
+
 void loadTemperature()
 {
 	static float result = 0;
 	static int16_t raw_temp = 0;
 
-//	HTS221_Get_Temperature(&raw_temp);
+	raw_temp = hts22.getTemperature();
+
 	result = (float)raw_temp / 10.0;
 
 	uart_tx_buffer.append("t:");
@@ -225,7 +229,7 @@ void loadPressure()
 	static float result = 0;
 	static uint32_t pressure_raw = 0;
 
-//	readPressureRaw(&pressure_raw);
+	pressure_raw = lps22.readPressureRaw();
 
 	result = readPressureMillibars(pressure_raw);
 
@@ -240,7 +244,7 @@ void loadHumidity()
 	static float result = 0;
 	static uint16_t hum_raw = 0;
 
-//	HTS221_Get_Humidity(&hum_raw);
+	hum_raw = hts22.getHumidity();
 
 	result = (float)hum_raw / 10.0;
 
@@ -298,11 +302,11 @@ int main(void)
 
 	DMA1->IFCR = 0xffff;
 
-//	dma1_ch7_init();
+	dma1_ch7_init();
 	dma1_ch4_init();
 
-//	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
-//	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
 	NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
 	NVIC_EnableIRQ(DMA1_Channel4_IRQn);
@@ -310,14 +314,10 @@ int main(void)
 	NVIC_SetPriority(TIM1_UP_IRQn , 0);
 	setupI2C();
 
-//	Device::HTS22
-
-//	setupLPS22();
-//	setupHTS22();
-
+	hts22.enable(Device::HTS22_OutputDataRate::Rate_12_5Hz);
+	lps22.enable(Device::LPS22_OutputDataBitRate::Rate_25Hz);
 
 	timer1Setup();
-//	dma1_ch6_config((uint32_t)&USART2->DR , (uint32_t)uart_tx_buffer, 3);
 
 	__enable_irq();
 

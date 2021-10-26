@@ -17,13 +17,9 @@ void dma1_ch7_init()
 
 	auto&& dma {DMA_ChannelController::get(DMA1_Channel7)};
 
-	auto&& dma {DMA_ChannelController::get(DMA1_Channel4)};
 	dma.enableTransferCompleteInterrupt();
 	dma.setDirection(DMADirection::MemoryToPeriph);
 	dma.enableMemoryIncrement();
-
-	//enable memory increment
-	DMA1_Channel7->CCR |= DMA_CCR_MINC;
 
 	//set periph size = 8 bit
 	DMA1_Channel7->CCR &= ~DMA_CCR_PSIZE;
