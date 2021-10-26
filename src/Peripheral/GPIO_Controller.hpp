@@ -2,7 +2,8 @@
 
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
-#include "DeviceTraits.hpp"
+
+#include "../Peripheral/DeviceTraits.hpp"
 
 namespace Device
 {

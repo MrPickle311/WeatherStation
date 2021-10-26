@@ -2,7 +2,7 @@
 
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
-#include "../src/Devices/DMAController.hpp"
+#include "../src/Peripheral/DMAController.hpp"
 
 
 void dma1_clk_enable()

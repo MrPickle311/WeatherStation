@@ -1,4 +1,4 @@
-#include "DMAController.hpp"
+#include "../Peripheral/DMAController.hpp"
 
 namespace Device
 {

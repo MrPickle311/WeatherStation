@@ -9,9 +9,10 @@
 #include <sstream>
 #include <map>
 #include <functional>
-#include "../src/Devices/RCC_Controller.hpp"
-#include "../src/Devices/USART_Bus.hpp"
-#include "../src/Devices/Timer.hpp"
+
+#include "Peripheral/RCC_Controller.hpp"
+#include "Peripheral/Timer.hpp"
+#include "Peripheral/USART_Bus.hpp"
 
 void clk_en()
 {

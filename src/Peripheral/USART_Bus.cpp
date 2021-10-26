@@ -1,4 +1,5 @@
-#include "USART_Bus.hpp"
+#include "../Peripheral/USART_Bus.hpp"
+
 #include <cmath>
 
 namespace Device

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "DeviceTraits.hpp"
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 #include <any>
+#include "../Peripheral/DeviceTraits.hpp"
 
 namespace Device
 {

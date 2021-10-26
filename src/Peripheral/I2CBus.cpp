@@ -1,5 +1,5 @@
-#include "I2C_Bus.hpp"
 #include <cmath>
+#include "../Peripheral/I2C_Bus.hpp"
 
 namespace Device
 {
@@ -100,7 +100,7 @@ void I2C_Bus::setupSlowSpeedMode(uint32_t periph_fraquency)
 
 	auto mhz_fraquency {static_cast<uint8_t>( std::round(periph_fraquency / 1'000'000) )};
 
-	auto trise { static_cast<uint8_t>( std::round(1'000 / tpclk ) ) + 1 };
+	auto trise { static_cast<uint8_t>( std::round(1'000 / tpclk )  + 1 )  };
 
 	i2c_->CR2 |= mhz_fraquency << 0 ;
 	i2c_->CCR =  ccr << 0;

@@ -44,13 +44,6 @@ void resetLPS22()
 	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG2, auto_incremet_disable_val);
 }
 
-void setupLPS22()
-{
-	static reg_t config = 0x30;
-
-	Device::I2C_Bus::get(I2C1).writeToExternRegister(dev_adr, CTRL_REG1, config);
-}
-
 void setupHTS22()
 {
 	static reg_t config = 0x83;
@@ -154,21 +147,6 @@ void HTS221_Get_Humidity(uint16_t* value)
 	/* Saturation condition*/
 	 if(*value>1000) *value = 1000;
 
-}
-
-void readPressureRaw(uint32_t* result)
-{
-	uint8_t press_xl = 0;
-	uint8_t press_l = 0;
-	uint8_t press_H = 0;
-
-	auto&& i2c {Device::I2C_Bus::get(I2C1)};
-
-	i2c.readFromExternRegister(dev_adr, PRESS_OUT_XL, &press_xl, 1);
-	i2c.readFromExternRegister(dev_adr, PRESS_OUT_L, &press_l ,  1);
-	i2c.readFromExternRegister(dev_adr, PRESS_OUT_H, &press_H, 1);
-
-	*result = ( (press_H << 16) ) | (press_l << 8) | press_xl ;
 }
 
 float readPressureMillibars(uint32_t raw_pressure)

@@ -2,8 +2,8 @@
 
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
-#include "../src/Devices/GPIO_Controller.hpp"
-#include "../src/Devices/I2C_Bus.hpp"
+#include "../src/Peripheral/GPIO_Controller.hpp"
+#include "../src/Peripheral/I2C_Bus.hpp"
 
 void enableGPIOB()
 {
