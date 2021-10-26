@@ -47,6 +47,8 @@ public:
 	{
 		channel_->CMAR =  reinterpret_cast<uint32_t>(mem_adr);
 	}
+
+	void start(uint16_t bytes_count);
 };
 
 }

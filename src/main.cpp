@@ -14,6 +14,10 @@
 #include "Peripheral/Timer.hpp"
 #include "Peripheral/USART_Bus.hpp"
 
+#include "Devices/Sensor/HTS22.hpp"
+#include "Devices/Sensor/LPS22.hpp"
+
+
 void clk_en()
 {
 	auto&& rcc_controller {Device::RCC_Controller::getInstance()};
@@ -205,11 +209,10 @@ void DMA1_Channel4_IRQHandler(void)
 
 void loadTemperature()
 {
-	static uint8_t size = 0;
 	static float result = 0;
 	static int16_t raw_temp = 0;
 
-	HTS221_Get_Temperature(&raw_temp);
+//	HTS221_Get_Temperature(&raw_temp);
 	result = (float)raw_temp / 10.0;
 
 	uart_tx_buffer.append("t:");
@@ -219,11 +222,10 @@ void loadTemperature()
 
 void loadPressure()
 {
-	static uint8_t size = 0;
 	static float result = 0;
 	static uint32_t pressure_raw = 0;
 
-	readPressureRaw(&pressure_raw);
+//	readPressureRaw(&pressure_raw);
 
 	result = readPressureMillibars(pressure_raw);
 
@@ -235,11 +237,10 @@ void loadPressure()
 
 void loadHumidity()
 {
-	static uint8_t size = 0;
 	static float result = 0;
 	static uint16_t hum_raw = 0;
 
-	HTS221_Get_Humidity(&hum_raw);
+//	HTS221_Get_Humidity(&hum_raw);
 
 	result = (float)hum_raw / 10.0;
 
@@ -255,7 +256,7 @@ void sendData(std::string_view str_to_send)
 	dma.setMemoryAddress(&str_to_send[0]);
 	dma.setPeripheralAddress(&USART1->DR);
 
-	dma1_ch4_start(str_to_send.size());
+	dma.start(str_to_send.size());
 }
 
 std::map< int , std::function<void()> > callbacks;
@@ -309,8 +310,10 @@ int main(void)
 	NVIC_SetPriority(TIM1_UP_IRQn , 0);
 	setupI2C();
 
-	setupLPS22();
-	setupHTS22();
+//	Device::HTS22
+
+//	setupLPS22();
+//	setupHTS22();
 
 
 	timer1Setup();

@@ -58,5 +58,10 @@ void DMA_ChannelController::setPeripheralAddress(__IO uint32_t* periph_adr )
 	channel_->CPAR = reinterpret_cast<uint32_t>(periph_adr);
 }
 
+void DMA_ChannelController::start(uint16_t bytes_count)
+{
+	channel_->CNDTR = bytes_count;// set bytes count to transfer
+	channel_->CCR |= DMA_CCR_EN;
+}
 
 }

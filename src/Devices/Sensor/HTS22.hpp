@@ -26,6 +26,8 @@ class HTS22 : public I2C_Sensor
 	constexpr static uint8_t H0_T0_OUT_1 = 0x37;
 	constexpr static uint8_t H1_T0_OUT_0 = 0x3A;
 	constexpr static uint8_t H1_T0_OUT_1 = 0x3B;
+private:
+	uint16_t concatWord(uint8_t high_byte , uint8_t low_byte);
 public:
 	HTS22(I2C_Bus& bus);
 	void enable(const HTS22_OutputDataRate);
