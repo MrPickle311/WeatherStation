@@ -3,7 +3,6 @@
 #include "../inc/i2c.hpp"
 #include  "string.h"
 #include "stdio.h"
-#include "sensor.hpp"
 #include "dma.hpp"
 #include <string>
 #include <sstream>
@@ -17,6 +16,21 @@
 #include "Devices/Sensor/HTS22.hpp"
 #include "Devices/Sensor/LPS22.hpp"
 
+std::string uart_tx_buffer;
+std::map< int , std::function<void()> > callbacks;
+uint8_t nmbr = 0 ;
+Device::LPS_22 lps22 {Device::I2C_Bus::get(I2C1)};
+Device::HTS22 hts22 {Device::I2C_Bus::get(I2C1)};
+
+void sendData(std::string_view str_to_send)
+{
+	static auto dma{Device::DMA_ChannelController::get(DMA1_Channel4)};
+
+	dma.setMemoryAddress(&str_to_send[0]);
+	dma.setPeripheralAddress(&USART1->DR);
+
+	dma.start(str_to_send.size());
+}
 
 void clk_en()
 {
@@ -105,16 +119,6 @@ void usart1_gpioa_en()
 	usart1_gpio_rx_en();
 }
 
-void usart2_clk_en()
-{
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-}
-
-void usart1_clk_en()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-}
-
 void usart2_config()
 {
 	using namespace Device;
@@ -138,20 +142,20 @@ void usart1_config()
 void usart2Setup (void)
 {
 	usart2_gpioa_en();
-	usart2_clk_en();
+	Device::RCC_Controller::getInstance().enableUSART2Bus();
 	usart2_config();
 }
 
 void usart1Setup (void)
 {
 	usart1_gpioa_en();
-	usart1_clk_en();
+	Device::RCC_Controller::getInstance().enableUSART1Bus();
 	usart1_config();
 }
 
 void timer1Setup()//500ms
 {
-	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;//oblokuj zegar dla TIM1
+	Device::RCC_Controller::getInstance().enableTimer1();
 
 	auto&& timer{Device::Timer::get(TIM1)};
 
@@ -162,11 +166,19 @@ void timer1Setup()//500ms
 	timer.enableUpInterrupt();
 	timer.enable();
 
+	timer.on_timeout_handler_ = []
+	{
+		callbacks.at(nmbr)();
+		nmbr = ( nmbr + 1 ) % 3;
+
+		sendData(uart_tx_buffer);
+		turn_on_led();
+	};
+
 	NVIC_EnableIRQ(TIM1_UP_IRQn);////odpal przerwania
 }
 
 
-std::string uart_tx_buffer;
 extern "C" {
 
 void DMA1_Channel7_IRQHandler(void)
@@ -207,15 +219,12 @@ void DMA1_Channel4_IRQHandler(void)
 
 }
 
-Device::LPS_22 lps22 {Device::I2C_Bus::get(I2C1)};
-Device::HTS22 hts22 {Device::I2C_Bus::get(I2C1)};
 
 void loadTemperature()
 {
 	static float result = 0;
 	static int16_t raw_temp = 0;
 
-	raw_temp = hts22.getTemperature();
 
 	result = (float)raw_temp / 10.0;
 
@@ -227,16 +236,12 @@ void loadTemperature()
 void loadPressure()
 {
 	static float result = 0;
-	static uint32_t pressure_raw = 0;
 
-	pressure_raw = lps22.readPressureRaw();
-
-	result = readPressureMillibars(pressure_raw);
+	result = lps22.readPressureMillibars();
 
 	uart_tx_buffer.append("p:");
 	uart_tx_buffer.append(std::to_string(result));
 	uart_tx_buffer.append(";");
-
 }
 
 void loadHumidity()
@@ -253,37 +258,6 @@ void loadHumidity()
 	uart_tx_buffer.append(";");
 }
 
-void sendData(std::string_view str_to_send)
-{
-	static auto dma{Device::DMA_ChannelController::get(DMA1_Channel4)};
-
-	dma.setMemoryAddress(&str_to_send[0]);
-	dma.setPeripheralAddress(&USART1->DR);
-
-	dma.start(str_to_send.size());
-}
-
-std::map< int , std::function<void()> > callbacks;
-uint8_t nmbr = 0 ;
-
-extern "C" {
-
-__attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
-{
-	if(TIM1->SR & TIM_SR_UIF)
-	{
-		TIM1->SR =~TIM_SR_UIF;
-
-		callbacks.at(nmbr)();
-		nmbr = ( nmbr + 1 ) % 3;
-
-		sendData(uart_tx_buffer);
-		turn_on_led();
-
-	}
-}
-
-}
 
 int main(void)
 {
@@ -302,8 +276,7 @@ int main(void)
 
 	DMA1->IFCR = 0xffff;
 
-	dma1_ch7_init();
-	dma1_ch4_init();
+	dma1_init();
 
 	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
 	NVIC_EnableIRQ(DMA1_Channel7_IRQn);

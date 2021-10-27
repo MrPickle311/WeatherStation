@@ -3,6 +3,7 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 #include "../Peripheral/DeviceTraits.hpp"
+#include <functional>
 
 namespace Device
 {
@@ -17,6 +18,10 @@ enum TimerClockDivision : uint32_t
 class Timer : public Multiton<Timer, TIM_TypeDef*>
 {
 	friend class Multiton<Timer , TIM_TypeDef*>;
+public:
+	using ActionHandlerType = std::function<void()>;
+public:
+	ActionHandlerType on_timeout_handler_;
 private:
 	TIM_TypeDef* timer_;
 private:
@@ -29,6 +34,8 @@ public:
 	void enableUpInterrupt();
 
 	void enable();
+
+	void timeout();
 };
 
 }

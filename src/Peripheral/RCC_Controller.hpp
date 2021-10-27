@@ -55,6 +55,11 @@ public:
 	void enableHighSpeedClock();
 	void waitUntilHighSpeedClockReady();
 	void enableGPIOPort(GPIO_Enable port);
+	void enableDMAController();
+	void enableI2C1Bus();
+	void enableUSART1Bus();
+	void enableUSART2Bus();
+	void enableTimer1();
 };
 
 }

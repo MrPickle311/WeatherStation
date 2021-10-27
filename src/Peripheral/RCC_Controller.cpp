@@ -71,12 +71,34 @@ void RCC_Controller::waitUntilHighSpeedClockReady()
 	}
 }
 
-
 void RCC_Controller::enableGPIOPort(GPIO_Enable port)
 {
 	RCC->APB2ENR |= static_cast<uint8_t>(port);
 }
 
+void RCC_Controller::enableDMAController()
+{
+	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+}
 
+void RCC_Controller::enableI2C1Bus()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
+}
+
+void RCC_Controller::enableUSART1Bus()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+}
+
+void RCC_Controller::enableUSART2Bus()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+}
+
+void RCC_Controller::enableTimer1()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;//oblokuj zegar dla TIM1
+}
 
 }

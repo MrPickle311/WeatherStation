@@ -34,7 +34,7 @@ public:
 public:
 	void enable(const LPS22_OutputDataBitRate rate);
 	uint32_t readPressureRaw();
-	float readPressureMillibars(uint32_t raw_pressure);
+	float readPressureMillibars();
 };
 
 

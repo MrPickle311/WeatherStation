@@ -33,4 +33,26 @@ void Timer::enable()
 	timer_->CR1 |= TIM_CR1_CEN;
 }
 
+void Timer::timeout()
+{
+	if(on_timeout_handler_)
+	{
+		on_timeout_handler_();
+	}
+}
+
+}
+
+extern "C" {
+
+__attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
+{
+	if(TIM1->SR & TIM_SR_UIF)
+	{
+		TIM1->SR =~TIM_SR_UIF;
+		Device::Timer::get(TIM1).timeout();
+	}
+}
+
+
 }

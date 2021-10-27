@@ -4,23 +4,16 @@
 #include "stm32f1xx_nucleo.h"
 #include "../src/Peripheral/GPIO_Controller.hpp"
 #include "../src/Peripheral/I2C_Bus.hpp"
-
-void enableGPIOB()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-}
-
-void enableI2CClock()
-{
-	RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
-}
+#include "../src/Peripheral/RCC_Controller.hpp"
 
 void setupI2Clocks()
 {
 	RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
 
-	enableGPIOB();
-	enableI2CClock();
+	auto&& rcc {Device::RCC_Controller::getInstance()};
+
+	rcc.enableGPIOPort(Device::GPIO_Enable::B);
+	rcc.enableI2C1Bus();
 }
 
 void pullUpI2CPins()

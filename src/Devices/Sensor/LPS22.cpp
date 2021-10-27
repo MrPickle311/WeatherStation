@@ -26,9 +26,9 @@ void LPS_22::enable(const LPS22_OutputDataBitRate rate)
 	writeByteToRegister(CTRL_REG1, static_cast<uint8_t>( rate ) << 4);
 }
 
-float LPS_22::readPressureMillibars(uint32_t raw_pressure)
+float LPS_22::readPressureMillibars()
 {
-	return (float)raw_pressure / 4096;
+	return (float)readPressureRaw() / 4096;
 }
 
 }
