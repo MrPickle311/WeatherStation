@@ -16,6 +16,7 @@
 #include "Devices/Sensor/HTS22.hpp"
 #include "Devices/Sensor/LPS22.hpp"
 
+//refactor IT!!!
 std::string uart_tx_buffer;
 std::map< int , std::function<void()> > callbacks;
 uint8_t nmbr = 0 ;
@@ -223,10 +224,8 @@ void DMA1_Channel4_IRQHandler(void)
 void loadTemperature()
 {
 	static float result = 0;
-	static int16_t raw_temp = 0;
 
-
-	result = (float)raw_temp / 10.0;
+	result = (float) hts22.getTemperature() / 10.0;
 
 	uart_tx_buffer.append("t:");
 	uart_tx_buffer.append(std::to_string(result));

@@ -11,7 +11,7 @@ void enableOutputDMAChannel(DMA_Channel_TypeDef* channel)
 
 	RCC_Controller::getInstance().enableDMAController();
 
-	auto&& dma {DMA_ChannelController::get(DMA1_Channel7)};
+	auto&& dma {DMA_ChannelController::get(channel)};
 
 	dma.enableTransferCompleteInterrupt();
 	dma.setDirection(DMADirection::MemoryToPeriph);
