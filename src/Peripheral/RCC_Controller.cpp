@@ -11,12 +11,12 @@ FlashController::FlashController()
 
 void FlashController::setLatency(FlashLatency latency)
 {
-	FLASH->ACR |= static_cast<uint8_t>(latency);
+	FLASH->ACR |= static_cast<uint8_t>(latency);//s.58
 }
 
 void FlashController::enablePrefetchBuffer()
 {
-	FLASH->ACR |= FLASH_ACR_PRFTBE;
+	FLASH->ACR |= FLASH_ACR_PRFTBE;//datasheet s.60 & 58 above latency info
 }
 
 #define RCC_CFGR_PLLXTPRE_HSI_DIV2 0x0

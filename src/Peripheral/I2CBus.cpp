@@ -41,7 +41,7 @@ void I2C_Bus::readSingleByte(uint8_t address , uint8_t* buffer)
 
 	clearACK();
 	stop();
-
+	//after transmission the byte is still present in the RXE buffer
 	putByteToBuffer(buffer, 0);
 }
 
@@ -94,7 +94,7 @@ void I2C_Bus::resetBus()
 
 void I2C_Bus::setupSlowSpeedMode(uint32_t periph_fraquency)
 {
-	auto tpclk { 1'000'000'000 / periph_fraquency };
+	auto tpclk { 1'000'000'000 / periph_fraquency };// clock duration in ns
 
 	auto ccr{ static_cast<uint16_t>( std::round( 5000 / tpclk ) ) };
 
@@ -103,7 +103,14 @@ void I2C_Bus::setupSlowSpeedMode(uint32_t periph_fraquency)
 	auto trise { static_cast<uint8_t>( std::round(1'000 / tpclk )  + 1 )  };
 
 	i2c_->CR2 |= mhz_fraquency << 0 ;
+
+	//CCR Controls the SCL clock in master mode.
+	//datasheet s.782
 	i2c_->CCR =  ccr << 0;
+
+	//rising edge duration , max is 1000 ns ,
+	//for example if SYS_CLK = 64 MHz -> trise = 1000s * 10^-9 / 64 * 10^6 1/s  + 1
+	//datasheet s.783
 	i2c_->TRISE = trise << 0;
 }
 
@@ -141,6 +148,7 @@ void I2C_Bus::sendByte (uint8_t data)
 
 	i2c_->DR = data;
 
+	//BTF = ACK
 	waitForBitSet(I2C_SR1_BTF); // wait for Byte Transfer Finished bit to set
 }
 
@@ -155,6 +163,7 @@ void I2C_Bus::sendAddress(uint8_t address)
 
 void I2C_Bus::readBytes(uint8_t address, uint8_t *buffer, uint16_t size)
 {
+	//i2c transfer application note s.7
 	if (size == 1)
 	{
 		readSingleByte(address, buffer);
@@ -177,7 +186,7 @@ void I2C_Bus::readFromExternRegister (uint8_t address, uint8_t reg, uint8_t* tar
 {
 	beginTransmission(address, reg);
 
-	start();  // repeated start
+	start();  // repeated start, change transaction direction
 	readBytes( address | 0x1 , target, size);
 	stop();
 }

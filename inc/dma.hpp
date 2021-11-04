@@ -29,6 +29,6 @@ void enableOutputDMAChannel(DMA_Channel_TypeDef* channel)
 
 void dma1_init()
 {
-	enableOutputDMAChannel(DMA1_Channel7);
-	enableOutputDMAChannel(DMA1_Channel4);
+//	enableOutputDMAChannel(DMA1_Channel7);
+	enableOutputDMAChannel(DMA1_Channel4);//datasheet s.282
 }

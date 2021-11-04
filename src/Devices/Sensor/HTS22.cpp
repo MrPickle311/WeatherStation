@@ -74,6 +74,10 @@ int16_t HTS22::getTemperature()
 
 	 T_out = concatWord(buffer[1] , buffer[0]);
 
+	 //https://pl.wikipedia.org/wiki/Interpolacja_liniowa
+
+	 // tmp32 = ( T_out - T0_out ) / ( T1_out - T0_out ) * ( T1_degC - T0_degC ) * 10 + T0_degC * 10
+
 	/* 6. Compute the Temperature value by linear interpolation*/
 	 tmp32 = ( static_cast<int32_t>( T_out - T0_out) ) *
 			 ( static_cast<int32_t>( T1_degC - T0_degC ) * 10 );

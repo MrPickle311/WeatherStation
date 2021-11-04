@@ -136,7 +136,7 @@ void usart1_config()
 	auto&& usart {USART_Bus::get(USART1)};
 	usart.enableBus();
 	usart.enableDMAForTransmitter();
-	usart.setupBaudRate(115200, 64'000'000);
+	usart.setupBaudRate(115200, 64'000'000);//datasheet s.798
 	usart.enableTransmitter();
 }
 
@@ -149,7 +149,7 @@ void usart2Setup (void)
 
 void usart1Setup (void)
 {
-	usart1_gpioa_en();
+	usart1_gpioa_en();//datasheet s.181
 	Device::RCC_Controller::getInstance().enableUSART1Bus();
 	usart1_config();
 }
@@ -223,38 +223,42 @@ void DMA1_Channel4_IRQHandler(void)
 
 void loadTemperature()
 {
-	static float result = 0;
+//	static float result = 0;
 
-	result = (float) hts22.getTemperature() / 10.0;
+//	result = (float) hts22.getTemperature() / 10.0;
 
-	uart_tx_buffer.append("t:");
+	auto result = hts22.getTemperature();
+
+//	uart_tx_buffer.push_back(static_cast<char>(result));
+//		uart_tx_buffer.push_back(static_cast<char>( 8 >> result ));
+	uart_tx_buffer.append("<t");
 	uart_tx_buffer.append(std::to_string(result));
-	uart_tx_buffer.append(";");
+	uart_tx_buffer.append(">");
 }
 
 void loadPressure()
 {
-	static float result = 0;
+//	static float result = 0;
 
-	result = lps22.readPressureMillibars();
+	auto result = lps22.readPressureRaw();
 
-	uart_tx_buffer.append("p:");
+	uart_tx_buffer.append("<p");
 	uart_tx_buffer.append(std::to_string(result));
-	uart_tx_buffer.append(";");
+	uart_tx_buffer.append(">");
 }
 
 void loadHumidity()
 {
-	static float result = 0;
-	static uint16_t hum_raw = 0;
+//	static float result = 0;
+//	static uint16_t hum_raw = 0;
 
-	hum_raw = hts22.getHumidity();
+	auto hum_raw = hts22.getHumidity();
 
-	result = (float)hum_raw / 10.0;
+//	result = (float)hum_raw / 10.0;
 
-	uart_tx_buffer.append("h:");
-	uart_tx_buffer.append(std::to_string(result));
-	uart_tx_buffer.append(";");
+	uart_tx_buffer.append("<h");
+	uart_tx_buffer.append(std::to_string(hum_raw));
+	uart_tx_buffer.append(">");
 }
 
 
@@ -263,7 +267,6 @@ int main(void)
 	SystemInit();
 	clk_en();
 	gpioa_en();
-	usart2Setup();
 	usart1Setup();
 
 	callbacks[0] =  loadTemperature;
@@ -272,18 +275,17 @@ int main(void)
 
 	uart_tx_buffer.reserve(40);
 
-
+	//clear all dma1 flags datasheet s.285
 	DMA1->IFCR = 0xffff;
 
 	dma1_init();
 
-	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
-	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+//	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+//	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
 	NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
 	NVIC_EnableIRQ(DMA1_Channel4_IRQn);
 
-	NVIC_SetPriority(TIM1_UP_IRQn , 0);
 	setupI2C();
 
 	hts22.enable(Device::HTS22_OutputDataRate::Rate_12_5Hz);
