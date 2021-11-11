@@ -295,10 +295,57 @@ int main(void)
 
 	__enable_irq();
 
-	while(1)
-	{
 
-	}
+
+  Program::PwmGenerator::getInstance().startGenerating();
+
+  Program::BluetoothEventObserver observer;
+
+  auto& dispatcher = Program::Dispatcher::getInstance();
+
+  using namespace std::placeholders;
+
+  observer.subscribeEventResponse(Program::MoveForward::event_descriptor,
+		  []
+		   {
+				   //disable auto DMA cycle reload
+				   Program::Engines::getInstance().driveForward();
+		   });
+
+  observer.subscribeEventResponse(Program::MoveBackwards::event_descriptor,
+  		  []
+  		   {
+  				   //disable auto DMA cycle reload
+  				   Program::Engines::getInstance().driveBackwards();
+  		   });
+
+  observer.subscribeEventResponse(Program::TurnLeft::event_descriptor,
+  		  []
+  		   {
+  				   //disable auto DMA cycle reload
+  				   Program::Engines::getInstance().turnLeft();
+  		   });
+
+  observer.subscribeEventResponse(Program::TurnRight::event_descriptor,
+    		  []
+    		   {
+    				   //disable auto DMA cycle reload
+    				   Program::Engines::getInstance().turnRight();
+    		   });
+
+ dispatcher.subscribeEventGroup(Program::EventGroup::BluetoothEvents,
+		  	  	  	  	  	  	 std::bind(&Program::BluetoothEventObserver::handle , observer , _1) );
+
+
+  BluetoothPort::getInstance().waitForCommands();
+
+
+
+  while (1)
+  {
+	  Program::EventLoop::getInstance(Program::TaskQueue::getInstance()).start();
+  }
+
 
 }
 
