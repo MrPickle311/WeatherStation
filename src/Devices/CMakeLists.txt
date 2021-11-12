@@ -1,0 +1,3 @@
+add_subdirectory(Sensor)
+add_subdirectory(Engine)
+add_subdirectory(Communication)
