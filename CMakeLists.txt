@@ -1,10 +1,9 @@
-project(WeatherStationTests 0.1)
+cmake_minimum_required(VERSION 3.10)
 
-set_target_properties(${PROJECT_NAME} 
-	PROPERTIES
-    CXX_STANDARD 17
-    CMAKE_CXX_STANDARD_REQUIRED ON
-    )
+project(WeatherStationTests VERSION 0.1 LANGUAGES CXX)
+
+
+set (CMAKE_CXX_STANDARD 17)
 
 set(HEADERS_DIRS 
     ${PROJECT_SOURCE_DIR}/src/Processing

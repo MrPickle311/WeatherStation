@@ -10,11 +10,16 @@ set(GOOGLETEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../extern/googletest")
 if (EXISTS ${GOOGLETEST_DIR})
     set(GTestSrc ${GOOGLETEST_DIR}/googletest)
     set(GMockSrc ${GOOGLETEST_DIR}/googlemock)
+	message("Found googletest in project folder")
+	#set(CMAKE_PREFIX_PATH 
+	#find_package(GTest REQUIRED PATHS "${GOOGLETEST_DIR}/build/lib/libgtest.a" ) 
+	find_package(GTest)
 elseif (UNIX AND EXISTS /usr/src/gtest)
     set(GTestSrc /usr/src/gtest)
     message(WARNING "Using gtest from system")
     if (EXISTS /usr/src/gmock)
         set(GMockSrc /usr/src/gmock)
+		find_package(GTest)
     endif ()
 else ()
     message( FATAL_ERROR "No googletest src dir found - set GOOGLETEST_DIR to enable!")
@@ -27,8 +32,6 @@ if (NOT ${GMockSrc} STREQUAL "")
     list(APPEND GTestFiles ${GMockSrc}/src/gmock-all.cc)
     list(APPEND GTestIncludes ${GMockSrc} ${GMockSrc}/include)
 endif ()
-
-include_directories(${GTestIncludes})
 
 set(LIBS
 	Communication
@@ -57,16 +60,16 @@ enable_testing()
 
 function(add_test name)
     add_executable(${name} ${name}.hpp ${name}.cpp ${GTestFiles} ${TESTED_HEADERS})
-    target_include_directories(${name} PUBLIC ${INCLUDES})
-    target_compile_definitions(${name}
-       PRIVATE $<$<OR:$<CONFIG:Debug> , $<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
-	)
+    target_include_directories(${name} PUBLIC ${INCLUDES} ${GTestIncludes})
+    #target_compile_definitions(${name}
+    #   PRIVATE $<$<OR: $<CONFIG:Debug> , $<CONFIG:RelWithDebInfo> >:QT_QML_DEBUG>
+	#)
     gtest_discover_tests(${name})
     target_link_libraries(${name} PRIVATE
        Threads::Threads
        ${LIBS})
 endfunction()
 
-find_package(GTest)
 
-#add_test(MediatorTests) 
+
+add_test(EventLoopTests) 
