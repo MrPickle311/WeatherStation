@@ -3,6 +3,7 @@
 #include "DMAController.hpp"
 #include "DeviceTraits.hpp"
 
+#include <functional>
 #include <vector>
 
 namespace Device
@@ -10,6 +11,7 @@ namespace Device
 
 class DeviceStream
 {
+public:
     using BytesCollectionType = std::vector<uint8_t>;
     using ActionHandler = std::function<void(BytesCollectionType& data)>;
 

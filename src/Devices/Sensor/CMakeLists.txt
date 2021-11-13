@@ -5,9 +5,6 @@ set(sensor_headers
 )
 
 set(sensor_sources
-	HTS22.cpp
-	LPS22.cpp
-	I2CSensor.cpp
 )
 
 add_library(Sensors STATIC
