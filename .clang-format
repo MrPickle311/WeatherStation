@@ -48,7 +48,7 @@ BreakStringLiterals: true
 ColumnLimit: 80
 CommentPragmas: "^ IWYU pragma:"
 CompactNamespaces: false
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 BitFieldColonSpacing: Both
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 0

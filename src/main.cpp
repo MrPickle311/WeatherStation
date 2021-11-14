@@ -16,6 +16,8 @@
 #include <string>
 
 // refactor IT!!!
+auto bus = Device::I2C_Bus::get(I2C1);
+auto queue = Device::I2C_DeviceQueue::get(bus);
 std::string uart_tx_buffer;
 std::map<int, std::function<void()>> callbacks;
 uint8_t nmbr = 0;
@@ -28,6 +30,16 @@ void sendData(std::string_view str_to_send)
 
     dma.setMemoryAddress(&str_to_send[0]);
     dma.setPeripheralAddress(&USART1->DR);
+
+    dma.start(str_to_send.size());
+}
+
+void sendToDebug(std::string_view str_to_send)
+{
+    static auto dma{Device::DMA_ChannelController::get(DMA1_Channel7)};
+
+    dma.setMemoryAddress(&str_to_send[0]);
+    dma.setPeripheralAddress(&USART2->DR);
 
     dma.start(str_to_send.size());
 }
@@ -269,6 +281,7 @@ int main(void)
     clk_en();
     gpioa_en();
     usart1Setup();
+    //    usart2Setup();
 
     callbacks[0] = loadTemperature;
     callbacks[1] = loadPressure;
@@ -281,8 +294,8 @@ int main(void)
 
     dma1_init();
 
-    //	NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
-    //	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    //    NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+    //    NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
     NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
@@ -340,7 +353,6 @@ int main(void)
     //
     //  BluetoothPort::getInstance().waitForCommands();
     //
-
 
     while (1)
     {
