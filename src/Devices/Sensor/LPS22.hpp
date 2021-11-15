@@ -1,6 +1,7 @@
 #pragma once
 
 #include "I2CSensor.hpp"
+#include
 
 namespace Device
 {
@@ -14,10 +15,13 @@ enum class LPS22_OutputDataBitRate : uint8_t
     Rate_75Hz = 0b101
 };
 
-template <typename I2CBusType>
-class LPS_22 : public I2C_Sensor<I2CBusType>
+template <typename I2CDeviceQueueType,
+          typename OutputTransactionType,
+          typename InputTransactionType>
+class LPS_22 :
+    public I2C_Sensor<I2CDeviceQueueType, OutputDeviceStream, InputDeviceStream>
 {
-    using typename I2C_Sensor<I2CBusType>::addr_t;
+    using typename I2C_Sensor<I2CDeviceQueueType>::addr_t;
     constexpr static addr_t dev_adr{0x5D << 1};
 
     constexpr static addr_t TEMP_OUT_L{0x2B};
@@ -31,7 +35,10 @@ class LPS_22 : public I2C_Sensor<I2CBusType>
     constexpr static addr_t PRESS_OUT_H{0x2A};
 
 public:
-    LPS_22(I2CBusType& bus) : I2C_Sensor<I2CBusType>{bus, dev_adr} {}
+    LPS_22(I2CDeviceQueueType& bus) :
+        I2C_Sensor<I2CDeviceQueueType, OutputTransactionType, InputTransactionType>{
+            bus, dev_adr}
+    {}
 
 public:
     void enable(const LPS22_OutputDataBitRate rate)

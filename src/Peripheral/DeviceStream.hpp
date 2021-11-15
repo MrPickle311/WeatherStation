@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../TypeTraits/Singleton.hpp"
 #include "DMAController.hpp"
-#include "DeviceTraits.hpp"
 
 #include <functional>
 #include <vector>

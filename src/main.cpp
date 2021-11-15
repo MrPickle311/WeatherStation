@@ -21,8 +21,10 @@ auto queue = Device::I2C_DeviceQueue::get(bus);
 std::string uart_tx_buffer;
 std::map<int, std::function<void()>> callbacks;
 uint8_t nmbr = 0;
-Device::LPS_22 lps22{Device::I2C_Bus::get(I2C1)};
-Device::HTS22 hts22{Device::I2C_Bus::get(I2C1)};
+Device::LPS_22 lps22<Device::I2C_DeviceQueue,
+                     Device::OutputDeviceStream,
+                     Device::InputDeviceStream>{Device::I2C_Bus::get(I2C1)};
+Device::HTS22 hts22<>{Device::I2C_Bus::get(I2C1)};
 
 void sendData(std::string_view str_to_send)
 {
