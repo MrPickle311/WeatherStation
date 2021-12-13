@@ -4,17 +4,17 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 
-namespace Device
+namespace Peripheral
 {
 
 enum class FlashLatency : uint8_t
 {
-    ZeroWaitState = 0x0, // 0 < SYSCLK? 24 MHz
-    OneWaitState = FLASH_ACR_LATENCY_0, // 24 MHz < SYSCLK ? 48 MHz
-    TwoWaitStates = FLASH_ACR_LATENCY_1 // 48 MHz < SYSCLK ? 72 MHz
+    ZeroWaitState = 0x0, // 0 < SYSCLK < 24 MHz
+    OneWaitState = FLASH_ACR_LATENCY_0, // 24 MHz < SYSCLK < 48 MHz
+    TwoWaitStates = FLASH_ACR_LATENCY_1 // 48 MHz < SYSCLK < 72 MHz
 };
 
-class FlashController : public Singleton<FlashController>
+class FlashController : public TypeTraits::Singleton<FlashController>
 {
     friend class Singleton<FlashController>;
 
@@ -26,7 +26,7 @@ public:
     void enablePrefetchBuffer();
 };
 
-class PLL_Loop : public Singleton<PLL_Loop>
+class PLL_Loop : public TypeTraits::Singleton<PLL_Loop>
 {
     friend class Singleton<PLL_Loop>;
 
@@ -48,7 +48,7 @@ enum class GPIO_Enable
     D = RCC_APB2ENR_IOPDEN
 };
 
-class RCC_Controller : public Singleton<RCC_Controller>
+class RCC_Controller : public TypeTraits::Singleton<RCC_Controller>
 {
     friend class Singleton<RCC_Controller>;
 
@@ -66,4 +66,4 @@ public:
     void enableTimer1();
 };
 
-} // namespace Device
+} // namespace Peripheral

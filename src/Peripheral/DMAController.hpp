@@ -6,11 +6,9 @@
 
 #include <any>
 
-namespace Device
+namespace Peripheral
 {
 
-class DMA_Controller
-{};
 
 enum class DMADirection : uint8_t
 {
@@ -19,9 +17,10 @@ enum class DMADirection : uint8_t
 };
 
 class DMA_ChannelController :
-    public Multiton<DMA_ChannelController, DMA_Channel_TypeDef*>
+    public TypeTraits::Multiton<DMA_ChannelController, DMA_Channel_TypeDef*>
 {
-    friend class Multiton<DMA_ChannelController, DMA_Channel_TypeDef*>;
+    friend class TypeTraits::Multiton<DMA_ChannelController,
+                                      DMA_Channel_TypeDef*>;
 
 private:
     volatile DMA_Channel_TypeDef* channel_;
@@ -56,4 +55,4 @@ public:
 };
 
 
-} // namespace Device
+} // namespace Peripheral

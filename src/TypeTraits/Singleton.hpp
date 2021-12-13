@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 
-namespace Device
+namespace TypeTraits
 {
 
 template <typename ObjectType>
@@ -66,4 +66,4 @@ std::map<Key, ObjectType> Multiton<ObjectType, Key>::instances_;
 template <typename ObjectType, typename Key>
 std::map<Key*, ObjectType> Multiton<ObjectType, Key*>::instances_;
 
-} // namespace Device
+} // namespace TypeTraits
