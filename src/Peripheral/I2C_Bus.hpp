@@ -14,8 +14,10 @@ namespace Peripheral
 class I2C_Bus_Base : public TypeTraits::Multiton<I2C_Bus_Base, I2C_TypeDef*>
 {
     friend class TypeTraits::Multiton<I2C_Bus_Base, I2C_TypeDef*>;
+    friend class I2C_Bus_ConfigController;
+    friend class I2C_Bus_IOController;
 
-protected:
+private:
     volatile I2C_TypeDef* i2c_;
 
 protected:
@@ -23,19 +25,20 @@ protected:
     void resetControlRegisters();
     void clearStatusFlags();
 
-    // I have finished here
 protected:
-    I2C_Bus_Base
+    I2C_Bus_Base(I2C_TypeDef* i2c);
 };
 
 class I2C_Bus_ConfigController :
-    public TypeTraits::Multiton<I2C_Bus_ConfigController, I2C_TypeDef*>,
-    public I2C_Bus_Base
+    public TypeTraits::Multiton<I2C_Bus_ConfigController, I2C_TypeDef*>
 {
     friend class TypeTraits::Multiton<I2C_Bus_ConfigController, I2C_TypeDef*>;
 
 private:
-    I2C_Bus_ConfigController(volatile I2C_TypeDef* bus);
+    I2C_Bus_Base& base_;
+
+private:
+    I2C_Bus_ConfigController(I2C_TypeDef* bus);
 
 public:
     void resetBus();
@@ -43,8 +46,18 @@ public:
     void enable();
 };
 
-class I2C_Bus_IOController : public I2C_Bus_Base
+class I2C_Bus_IOController :
+    public TypeTraits::Multiton<I2C_Bus_IOController, I2C_TypeDef*>
 {
+    friend class TypeTraits::Multiton<I2C_Bus_IOController, I2C_TypeDef*>;
+
+private:
+    I2C_Bus_Base& base_;
+
+private:
+    I2C_Bus_IOController(I2C_TypeDef* bus);
+
+public:
     void start();
     void stop();
 

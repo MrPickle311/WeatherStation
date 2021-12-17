@@ -1,4 +1,4 @@
-#include "../Peripheral/I2C_Bus.hpp"
+#include "I2C_Bus.hpp"
 
 #include <cmath>
 
@@ -25,15 +25,15 @@ void I2C_Bus_Base::clearStatusFlags()
 }
 
 
-I2C_Bus::I2C_Bus(volatile I2C_TypeDef* bus) : i2c_{bus}
+I2C_Bus_Base::I2C_Bus_Base(I2C_TypeDef* bus) : i2c_{bus}
 {
     resetControlRegisters();
 }
 
 void I2C_Bus_ConfigController::resetBus()
 {
-    i2c_->CR1 |= I2C_CR1_SWRST;
-    i2c_->CR1 &= ~I2C_CR1_SWRST;
+    base_.i2c_->CR1 |= I2C_CR1_SWRST;
+    base_.i2c_->CR1 &= ~I2C_CR1_SWRST;
 }
 
 void I2C_Bus_ConfigController::setupSlowSpeedMode(uint32_t periph_fraquency)
@@ -47,21 +47,23 @@ void I2C_Bus_ConfigController::setupSlowSpeedMode(uint32_t periph_fraquency)
 
     auto trise{static_cast<uint8_t>(std::round(1'000 / tpclk) + 1)};
 
-    i2c_->CR2 |= mhz_fraquency << 0;
+    base_.i2c_->CR2 |= mhz_fraquency << 0;
 
     // CCR Controls the SCL clock in master mode.
-    // datasheet s.782
-    i2c_->CCR = ccr << 0;
+    base_.i2c_->CCR = ccr << 0;
 
     // rising edge duration , max is 1000 ns ,
     // for example if SYS_CLK = 64 MHz -> trise = 1000s * 10^-9 / 64 * 10^6 1/s
-    // + 1 datasheet s.783
-    i2c_->TRISE = trise << 0;
+    base_.i2c_->TRISE = trise << 0;
 }
+
+I2C_Bus_ConfigController::I2C_Bus_ConfigController(I2C_TypeDef* bus) :
+    base_{I2C_Bus_Base::get(bus)}
+{}
 
 void I2C_Bus_ConfigController::enable()
 {
-    i2c_->CR1 |= I2C_CR1_PE;
+    base_.i2c_->CR1 |= I2C_CR1_PE;
 }
 
 void I2C_Bus_IOController::start()
@@ -70,31 +72,31 @@ void I2C_Bus_IOController::start()
     //    i2c_->CR1 |=
     //        I2C_CR1_ACK; // here bcs when PE cleared , bit number 10 is
     //        cleared also
-    i2c_->CR1 |= I2C_CR1_START; // generate start
+    base_.i2c_->CR1 |= I2C_CR1_START; // generate start
 
-    waitForBitSet(I2C_SR1_SB); // wait for generate START signal
+    base_.waitForBitSet(I2C_SR1_SB); // wait for generate START signal
 }
 
 void I2C_Bus_IOController::stop()
 {
-    i2c_->CR1 |= I2C_CR1_STOP;
+    base_.i2c_->CR1 |= I2C_CR1_STOP;
 }
 
 void I2C_Bus_IOController::clearACK()
 {
-    i2c_->CR1 &= ~I2C_CR1_ACK;
+    base_.i2c_->CR1 &= ~I2C_CR1_ACK;
 }
 
 void I2C_Bus_IOController::setACK()
 {
-    i2c_->CR1 |= I2C_CR1_ACK;
+    base_.i2c_->CR1 |= I2C_CR1_ACK;
 }
 
 uint8_t I2C_Bus_IOController::readByte()
 {
-    waitForBitSet(I2C_SR1_RXNE); // wait for "Data register not empty"
+    base_.waitForBitSet(I2C_SR1_RXNE); // wait for "Data register not empty"
 
-    return i2c_->DR;
+    return base_.i2c_->DR;
 }
 
 
@@ -106,22 +108,25 @@ void I2C_Bus_IOController::beginTransmission(uint8_t address, uint8_t reg_adr)
 }
 void I2C_Bus_IOController::sendByte(uint8_t data)
 {
-    waitForBitSet(I2C_SR1_TXE); // wait for TXE bit to set
+    base_.waitForBitSet(I2C_SR1_TXE); // wait for TXE bit to set
 
-    i2c_->DR = data;
+    base_.i2c_->DR = data;
 
     // BTF = ACK
-    waitForBitSet(I2C_SR1_BTF); // wait for Byte Transfer Finished bit to set
+    base_.waitForBitSet(
+        I2C_SR1_BTF); // wait for Byte Transfer Finished bit to set
 }
 
 void I2C_Bus_IOController::sendAddress(uint8_t address)
 {
-    i2c_->DR = address; //  send the address
+    base_.i2c_->DR = address; //  send the address
 
-    waitForBitSet(I2C_SR1_ADDR); // wait for ADDR bit to set
+    base_.waitForBitSet(I2C_SR1_ADDR); // wait for ADDR bit to set
 
-    clearStatusFlags(); // read SR1 and SR2 to clear the ADDR bit
+    base_.clearStatusFlags(); // read SR1 and SR2 to clear the ADDR bit
 }
 
-
+I2C_Bus_IOController::I2C_Bus_IOController(I2C_TypeDef* bus) :
+    base_{I2C_Bus_Base::get(bus)}
+{}
 } // namespace Peripheral
